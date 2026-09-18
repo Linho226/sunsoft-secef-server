@@ -1,14 +1,12 @@
 from fastapi import (
     APIRouter,
-    Depends,
     HTTPException,
     Response,
     status,
 )
-from sqlalchemy.orm import Session
 
 from sunsoft_secef_server.api.dependencies import (
-    get_session,
+    SessionDependency,
 )
 from sunsoft_secef_server.schemas import (
     AgentHeartbeatRequest,
@@ -22,6 +20,7 @@ from sunsoft_secef_server.storage.models import (
 )
 from sunsoft_secef_server.storage.repositories import (
     AgentRepository,
+    CentralJobConflictError,
     CentralJobNotFoundError,
     CentralJobRepository,
     InvalidJobTransitionError,
@@ -38,6 +37,8 @@ def _normalize_identifier(
     value: str,
     field_name: str,
 ) -> str:
+    """Normalise un identifiant reçu dans l'URL."""
+
     normalized_value = value.strip()
 
     if not normalized_value:
@@ -58,9 +59,14 @@ def _normalize_identifier(
 def heartbeat(
     agent_uid: str,
     payload: AgentHeartbeatRequest,
-    session: Session = Depends(get_session),
+    session: SessionDependency,
 ) -> AgentHeartbeatResponse:
-    """Enregistre ou actualise le heartbeat d'un Agent."""
+    """
+    Enregistre ou actualise le heartbeat d'un Agent.
+
+    L'identifiant présent dans l'URL doit correspondre
+    exactement à celui contenu dans le payload.
+    """
 
     normalized_agent_uid = _normalize_identifier(
         agent_uid,
@@ -109,9 +115,15 @@ def heartbeat(
 )
 def next_job(
     agent_uid: str,
-    session: Session = Depends(get_session),
+    session: SessionDependency,
 ) -> CentralJob | Response:
-    """Retourne le prochain Job destiné à l'Agent."""
+    """
+    Retourne le prochain Job destiné à l'Agent.
+
+    Un Job pending ou processing peut être redélivré
+    afin de permettre la reprise après perte réseau
+    ou redémarrage de l'Agent.
+    """
 
     normalized_agent_uid = _normalize_identifier(
         agent_uid,
@@ -155,14 +167,32 @@ def next_job(
 @router.put(
     "/{agent_uid}/jobs/{job_uid}/status",
     response_model=CentralJobReportResponse,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Job central introuvable.",
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": (
+                "Transition d'état ou rapport "
+                "terminal incompatible."
+            ),
+        },
+    },
 )
 def report_job_status(
     agent_uid: str,
     job_uid: str,
     payload: CentralJobReportRequest,
-    session: Session = Depends(get_session),
+    session: SessionDependency,
 ) -> CentralJobReportResponse:
-    """Enregistre l'état d'un Job remonté par l'Agent."""
+    """
+    Enregistre l'état d'un Job remonté par l'Agent.
+
+    Les états terminaux sont protégés contre toute
+    modification ultérieure. Un rapport terminal
+    identique peut cependant être rejoué afin de
+    supporter la perte d'un accusé de réception HTTP.
+    """
 
     normalized_agent_uid = _normalize_identifier(
         agent_uid,
@@ -196,7 +226,10 @@ def report_job_status(
             detail="Job central introuvable.",
         ) from exc
 
-    except InvalidJobTransitionError as exc:
+    except (
+        InvalidJobTransitionError,
+        CentralJobConflictError,
+    ) as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),

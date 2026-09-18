@@ -1,6 +1,7 @@
 from collections.abc import Generator
+from typing import Annotated
 
-from fastapi import Request
+from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
 from sunsoft_secef_server.storage.database import Database
@@ -28,7 +29,12 @@ def get_database(
 def get_session(
     request: Request,
 ) -> Generator[Session, None, None]:
-    """Fournit une transaction SQLAlchemy à une requête."""
+    """
+    Fournit une transaction SQLAlchemy à une requête.
+
+    Le commit est effectué à la sortie normale.
+    Toute exception provoque un rollback.
+    """
 
     database = get_database(
         request
@@ -42,3 +48,12 @@ def get_session(
         except Exception:
             session.rollback()
             raise
+
+
+SessionDependency = Annotated[
+    Session,
+    Depends(
+        get_session,
+        scope="function",
+    ),
+]
