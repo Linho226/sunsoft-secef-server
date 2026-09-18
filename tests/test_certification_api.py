@@ -6,6 +6,7 @@ from sunsoft_secef_server.config import Settings
 from sunsoft_secef_server.main import create_app
 from sunsoft_secef_server.storage.auth_repositories import (
     AgentCredentialRepository,
+    OdooCredentialRepository,
     TenantRepository,
 )
 from sunsoft_secef_server.storage.models import (
@@ -43,17 +44,27 @@ def _create_test_app(
     )
 
 
-def _provision_agent(
-    app,
-    agent_uid: str,
-) -> str:
-    """
-    Provisionne un Agent avec son Tenant et son credential.
+def _auth_headers(
+    token: str,
+) -> dict[str, str]:
+    return {
+        "Authorization": (
+            f"Bearer {token}"
+        ),
+    }
 
-    Le heartbeat ne crée plus les Agents.
-    Le token retourné permet d'appeler les routes
-    sécurisées /agents/... pendant les tests.
-    """
+
+def _provision_tenant_with_agent(
+    app,
+    *,
+    agent_uid: str | None = None,
+    tenant_name: str = "CERTIFICATION API TEST",
+) -> dict:
+    resolved_agent_uid = (
+        agent_uid
+        if agent_uid is not None
+        else _new_uid()
+    )
 
     with (
         app.state.database.session()
@@ -62,12 +73,12 @@ def _provision_agent(
         tenant = TenantRepository(
             session
         ).create(
-            name="CERTIFICATION API TEST",
+            name=tenant_name,
         )
 
         agent = Agent(
             tenant_id=tenant.id,
-            agent_uid=agent_uid,
+            agent_uid=resolved_agent_uid,
             version="0.1.0",
             environment="test",
         )
@@ -78,7 +89,7 @@ def _provision_agent(
 
         session.flush()
 
-        _, agent_token = (
+        agent_credential, agent_token = (
             AgentCredentialRepository(
                 session
             ).create(
@@ -86,19 +97,34 @@ def _provision_agent(
             )
         )
 
+        odoo_credential, odoo_token = (
+            OdooCredentialRepository(
+                session
+            ).create(
+                tenant=tenant
+            )
+        )
+
         session.commit()
 
-    return agent_token
-
-
-def _agent_auth_headers(
-    token: str,
-) -> dict[str, str]:
-    return {
-        "Authorization": (
-            f"Bearer {token}"
-        ),
-    }
+        return {
+            "tenant_id":
+                tenant.id,
+            "tenant_uid":
+                tenant.tenant_uid,
+            "agent_uid":
+                resolved_agent_uid,
+            "agent_id":
+                agent.id,
+            "agent_token":
+                agent_token,
+            "agent_credential_uid":
+                agent_credential.credential_uid,
+            "odoo_token":
+                odoo_token,
+            "odoo_credential_uid":
+                odoo_credential.credential_uid,
+        }
 
 
 def _certification_payload(
@@ -143,23 +169,28 @@ def test_create_certification_creates_job(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
     invoice_number = (
         "INV/2026/100"
     )
 
     with TestClient(app) as client:
-        _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
         )
 
         response = client.post(
             "/api/v1/certifications",
+            headers=_auth_headers(
+                provisioned["odoo_token"]
+            ),
             json=_certification_payload(
                 request_uid=request_uid,
-                agent_uid=agent_uid,
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
                 invoice_number=invoice_number,
             ),
         )
@@ -175,7 +206,7 @@ def test_create_certification_creates_job(
 
         assert (
             body["agent_uid"]
-            == agent_uid
+            == provisioned["agent_uid"]
         )
 
         assert (
@@ -234,30 +265,38 @@ def test_create_certification_is_idempotent(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
         )
 
         payload = _certification_payload(
             request_uid=request_uid,
-            agent_uid=agent_uid,
+            agent_uid=(
+                provisioned["agent_uid"]
+            ),
             invoice_number=(
                 "INV/2026/101"
             ),
         )
 
+        headers = _auth_headers(
+            provisioned["odoo_token"]
+        )
+
         first = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=payload,
         )
 
         second = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=payload,
         )
 
@@ -282,20 +321,27 @@ def test_create_certification_rejects_request_conflict(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        headers = _auth_headers(
+            provisioned["odoo_token"]
         )
 
         first = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=_certification_payload(
                 request_uid=request_uid,
-                agent_uid=agent_uid,
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
                 invoice_number=(
                     "INV/2026/102"
                 ),
@@ -307,7 +353,9 @@ def test_create_certification_rejects_request_conflict(
         conflicting_payload = (
             _certification_payload(
                 request_uid=request_uid,
-                agent_uid=agent_uid,
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
                 invoice_number=(
                     "INV/2026/DIFFERENT"
                 ),
@@ -316,6 +364,7 @@ def test_create_certification_rejects_request_conflict(
 
         second = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=conflicting_payload,
         )
 
@@ -329,18 +378,24 @@ def test_create_certification_rejects_job_type_conflict(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        headers = _auth_headers(
+            provisioned["odoo_token"]
         )
 
         payload = _certification_payload(
             request_uid=request_uid,
-            agent_uid=agent_uid,
+            agent_uid=(
+                provisioned["agent_uid"]
+            ),
             invoice_number=(
                 "INV/2026/103"
             ),
@@ -348,6 +403,7 @@ def test_create_certification_rejects_job_type_conflict(
 
         first = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=payload,
         )
 
@@ -359,6 +415,7 @@ def test_create_certification_rejects_job_type_conflict(
 
         second = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=payload,
         )
 
@@ -373,8 +430,17 @@ def test_create_certification_requires_known_agent(
     )
 
     with TestClient(app) as client:
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
         response = client.post(
             "/api/v1/certifications",
+            headers=_auth_headers(
+                provisioned["odoo_token"]
+            ),
             json=_certification_payload(
                 request_uid=_new_uid(),
                 agent_uid=_new_uid(),
@@ -394,19 +460,22 @@ def test_create_certification_rejects_empty_payload(
         tmp_path
     )
 
-    agent_uid = _new_uid()
-
     with TestClient(app) as client:
-        _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
         )
 
         response = client.post(
             "/api/v1/certifications",
+            headers=_auth_headers(
+                provisioned["odoo_token"]
+            ),
             json={
                 "request_uid": _new_uid(),
-                "agent_uid": agent_uid,
+                "agent_uid":
+                    provisioned["agent_uid"],
                 "invoice_number":
                     "INV/2026/EMPTY",
                 "job_type":
@@ -425,20 +494,27 @@ def test_get_certification_returns_pending_status(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        headers = _auth_headers(
+            provisioned["odoo_token"]
         )
 
         create_response = client.post(
             "/api/v1/certifications",
+            headers=headers,
             json=_certification_payload(
                 request_uid=request_uid,
-                agent_uid=agent_uid,
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
                 invoice_number=(
                     "INV/2026/105"
                 ),
@@ -454,7 +530,8 @@ def test_get_certification_returns_pending_status(
             (
                 "/api/v1/certifications/"
                 f"{request_uid}"
-            )
+            ),
+            headers=headers,
         )
 
         assert response.status_code == 200
@@ -487,11 +564,20 @@ def test_get_unknown_certification_returns_404(
     )
 
     with TestClient(app) as client:
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
         response = client.get(
             (
                 "/api/v1/certifications/"
                 f"{_new_uid()}"
-            )
+            ),
+            headers=_auth_headers(
+                provisioned["odoo_token"]
+            ),
         )
 
         assert response.status_code == 404
@@ -504,7 +590,6 @@ def test_get_certification_returns_completed_result(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
 
     invoice_number = (
@@ -512,16 +597,28 @@ def test_get_certification_returns_completed_result(
     )
 
     with TestClient(app) as client:
-        agent_token = _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        odoo_headers = _auth_headers(
+            provisioned["odoo_token"]
+        )
+
+        agent_headers = _auth_headers(
+            provisioned["agent_token"]
         )
 
         create_response = client.post(
             "/api/v1/certifications",
+            headers=odoo_headers,
             json=_certification_payload(
                 request_uid=request_uid,
-                agent_uid=agent_uid,
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
                 invoice_number=invoice_number,
             ),
         )
@@ -564,21 +661,16 @@ def test_get_certification_returns_completed_result(
         report_response = client.put(
             (
                 f"/api/v1/agents/"
-                f"{agent_uid}/jobs/"
+                f"{provisioned['agent_uid']}"
+                "/jobs/"
                 f"{job_uid}/status"
             ),
-            headers=_agent_auth_headers(
-                agent_token
-            ),
+            headers=agent_headers,
             json={
-                "status":
-                    "completed",
-                "attempt_count":
-                    1,
-                "result":
-                    result,
-                "error_message":
-                    None,
+                "status": "completed",
+                "attempt_count": 1,
+                "result": result,
+                "error_message": None,
             },
         )
 
@@ -591,7 +683,8 @@ def test_get_certification_returns_completed_result(
             (
                 "/api/v1/certifications/"
                 f"{request_uid}"
-            )
+            ),
+            headers=odoo_headers,
         )
 
         assert response.status_code == 200
@@ -621,20 +714,31 @@ def test_get_certification_returns_unknown_status(
         tmp_path
     )
 
-    agent_uid = _new_uid()
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        agent_token = _provision_agent(
-            app,
-            agent_uid,
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        odoo_headers = _auth_headers(
+            provisioned["odoo_token"]
+        )
+
+        agent_headers = _auth_headers(
+            provisioned["agent_token"]
         )
 
         create_response = client.post(
             "/api/v1/certifications",
+            headers=odoo_headers,
             json=_certification_payload(
                 request_uid=request_uid,
-                agent_uid=agent_uid,
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
                 invoice_number=(
                     "INV/2026/107"
                 ),
@@ -655,19 +759,15 @@ def test_get_certification_returns_unknown_status(
         report_response = client.put(
             (
                 f"/api/v1/agents/"
-                f"{agent_uid}/jobs/"
+                f"{provisioned['agent_uid']}"
+                "/jobs/"
                 f"{job_uid}/status"
             ),
-            headers=_agent_auth_headers(
-                agent_token
-            ),
+            headers=agent_headers,
             json={
-                "status":
-                    "unknown",
-                "attempt_count":
-                    1,
-                "result":
-                    None,
+                "status": "unknown",
+                "attempt_count": 1,
+                "result": None,
                 "error_message": (
                     "Résultat fiscal indéterminé."
                 ),
@@ -683,7 +783,8 @@ def test_get_certification_returns_unknown_status(
             (
                 "/api/v1/certifications/"
                 f"{request_uid}"
-            )
+            ),
+            headers=odoo_headers,
         )
 
         assert response.status_code == 200
@@ -703,3 +804,217 @@ def test_get_certification_returns_unknown_status(
                 "Résultat fiscal indéterminé."
             )
         )
+
+
+# ---------------------------------------------------------
+# Tests de sécurité Odoo / Tenant
+# ---------------------------------------------------------
+
+
+def test_create_certification_requires_odoo_token(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    with TestClient(app) as client:
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        response = client.post(
+            "/api/v1/certifications",
+            json=_certification_payload(
+                request_uid=_new_uid(),
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
+                invoice_number=(
+                    "INV/2026/AUTH-001"
+                ),
+            ),
+        )
+
+        assert response.status_code == 401
+
+
+def test_create_certification_rejects_agent_token(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    with TestClient(app) as client:
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        response = client.post(
+            "/api/v1/certifications",
+            headers=_auth_headers(
+                provisioned["agent_token"]
+            ),
+            json=_certification_payload(
+                request_uid=_new_uid(),
+                agent_uid=(
+                    provisioned["agent_uid"]
+                ),
+                invoice_number=(
+                    "INV/2026/AUTH-002"
+                ),
+            ),
+        )
+
+        assert response.status_code == 401
+
+
+def test_create_certification_rejects_other_tenant_agent(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    with TestClient(app) as client:
+        tenant_a = (
+            _provision_tenant_with_agent(
+                app,
+                tenant_name="TENANT A",
+            )
+        )
+
+        tenant_b = (
+            _provision_tenant_with_agent(
+                app,
+                tenant_name="TENANT B",
+            )
+        )
+
+        response = client.post(
+            "/api/v1/certifications",
+            headers=_auth_headers(
+                tenant_a["odoo_token"]
+            ),
+            json=_certification_payload(
+                request_uid=_new_uid(),
+                agent_uid=(
+                    tenant_b["agent_uid"]
+                ),
+                invoice_number=(
+                    "INV/2026/CROSS-TENANT"
+                ),
+            ),
+        )
+
+        assert response.status_code == 403
+
+
+def test_get_certification_requires_odoo_token(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    with TestClient(app) as client:
+        response = client.get(
+            (
+                "/api/v1/certifications/"
+                f"{_new_uid()}"
+            )
+        )
+
+        assert response.status_code == 401
+
+
+def test_get_certification_rejects_agent_token(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    with TestClient(app) as client:
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        response = client.get(
+            (
+                "/api/v1/certifications/"
+                f"{_new_uid()}"
+            ),
+            headers=_auth_headers(
+                provisioned["agent_token"]
+            ),
+        )
+
+        assert response.status_code == 401
+
+
+def test_tenant_cannot_read_other_tenant_certification(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    request_uid = _new_uid()
+
+    with TestClient(app) as client:
+        tenant_a = (
+            _provision_tenant_with_agent(
+                app,
+                tenant_name="TENANT A",
+            )
+        )
+
+        tenant_b = (
+            _provision_tenant_with_agent(
+                app,
+                tenant_name="TENANT B",
+            )
+        )
+
+        create_response = client.post(
+            "/api/v1/certifications",
+            headers=_auth_headers(
+                tenant_b["odoo_token"]
+            ),
+            json=_certification_payload(
+                request_uid=request_uid,
+                agent_uid=(
+                    tenant_b["agent_uid"]
+                ),
+                invoice_number=(
+                    "INV/2026/TENANT-B"
+                ),
+            ),
+        )
+
+        assert (
+            create_response.status_code
+            == 200
+        )
+
+        response = client.get(
+            (
+                "/api/v1/certifications/"
+                f"{request_uid}"
+            ),
+            headers=_auth_headers(
+                tenant_a["odoo_token"]
+            ),
+        )
+
+        # On masque volontairement l'existence
+        # d'une certification appartenant à B.
+        assert response.status_code == 404
