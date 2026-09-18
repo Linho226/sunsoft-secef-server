@@ -32,6 +32,10 @@ class Settings(BaseSettings):
         le=65535,
     )
 
+    database_url: str = (
+        "sqlite:///server_data/server.db"
+    )
+
     log_level: str = "INFO"
 
 
