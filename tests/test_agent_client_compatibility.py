@@ -17,7 +17,12 @@ from sunsoft_secef_agent.central.schemas import (
 )
 from sunsoft_secef_server.config import Settings
 from sunsoft_secef_server.main import create_app
+from sunsoft_secef_server.storage.auth_repositories import (
+    AgentCredentialRepository,
+    TenantRepository,
+)
 from sunsoft_secef_server.storage.models import (
+    Agent,
     JobStatus,
 )
 from sunsoft_secef_server.storage.repositories import (
@@ -115,6 +120,7 @@ def running_server(
 
         if time.monotonic() >= deadline:
             server.should_exit = True
+
             thread.join(
                 timeout=5.0
             )
@@ -193,16 +199,70 @@ def test_real_agent_client_talks_to_central_server(
         "payments": None,
     }
 
+    # -------------------------------------------------
+    # 1. Provisioning central de l'Agent
+    #
+    # Le heartbeat ne crée plus l'Agent.
+    # Celui-ci doit déjà appartenir à un Tenant
+    # et disposer de son propre credential.
+    # -------------------------------------------------
+
+    with (
+        app.state.database.session()
+        as session
+    ):
+        tenant = TenantRepository(
+            session
+        ).create(
+            name=(
+                "AGENT COMPATIBILITY TEST"
+            ),
+        )
+
+        agent = Agent(
+            tenant_id=tenant.id,
+            agent_uid=agent_uid,
+            version="0.0.0",
+            environment="test",
+        )
+
+        session.add(
+            agent
+        )
+
+        session.flush()
+
+        (
+            _,
+            agent_api_token,
+        ) = AgentCredentialRepository(
+            session
+        ).create(
+            agent=agent
+        )
+
+        session.commit()
+
+    # -------------------------------------------------
+    # 2. Création du vrai client Agent
+    #
+    # Le token est envoyé en Bearer par le
+    # CentralServerClient.
+    # -------------------------------------------------
+
     client = CentralServerClient(
         base_url=base_url,
-        api_token=None,
+        api_token=agent_api_token,
         connect_timeout=2.0,
         read_timeout=5.0,
     )
 
     try:
         # -------------------------------------------------
-        # 1. Health
+        # 3. Health
+        #
+        # Health reste accessible sans dépendre
+        # du credential Agent.
         # -------------------------------------------------
 
         health = client.health()
@@ -213,7 +273,12 @@ def test_real_agent_client_talks_to_central_server(
         )
 
         # -------------------------------------------------
-        # 2. Heartbeat réel Agent -> serveur
+        # 4. Heartbeat réel Agent -> serveur
+        #
+        # Le serveur vérifie maintenant que :
+        # - le Bearer token est valide ;
+        # - il s'agit bien d'un token Agent ;
+        # - le token appartient à agent_uid.
         # -------------------------------------------------
 
         heartbeat = (
@@ -236,8 +301,40 @@ def test_real_agent_client_talks_to_central_server(
             == agent_uid
         )
 
+        # Vérifie que le heartbeat a réellement
+        # mis à jour l'Agent provisionné.
+
+        with (
+            app.state.database.session()
+            as session
+        ):
+            stored_agent = (
+                AgentRepository(
+                    session
+                ).get_by_uid(
+                    agent_uid
+                )
+            )
+
+            assert stored_agent is not None
+
+            assert (
+                stored_agent.version
+                == "0.1.0"
+            )
+
+            assert (
+                stored_agent.environment
+                == "test"
+            )
+
+            assert (
+                stored_agent.tenant_id
+                == tenant.id
+            )
+
         # -------------------------------------------------
-        # 3. Aucun Job initialement
+        # 5. Aucun Job initialement
         # -------------------------------------------------
 
         assert (
@@ -248,11 +345,11 @@ def test_real_agent_client_talks_to_central_server(
         )
 
         # -------------------------------------------------
-        # 4. Création centrale d'une certification
+        # 6. Création centrale d'une certification
         #    et de son Job.
         #
         # À terme cette opération sera provoquée
-        # par Odoo via l'API centrale.
+        # par Odoo via l'API centrale sécurisée.
         # -------------------------------------------------
 
         with (
@@ -325,7 +422,7 @@ def test_real_agent_client_talks_to_central_server(
             session.commit()
 
         # -------------------------------------------------
-        # 5. Le vrai client Agent récupère le Job
+        # 7. Le vrai client Agent récupère le Job
         # -------------------------------------------------
 
         central_job = (
@@ -355,7 +452,7 @@ def test_real_agent_client_talks_to_central_server(
         )
 
         # -------------------------------------------------
-        # 6. Simulation du résultat de l'exécution locale
+        # 8. Simulation du résultat de l'exécution locale
         #
         # Aucun MCF réel n'est utilisé dans ce test.
         # -------------------------------------------------
@@ -363,14 +460,18 @@ def test_real_agent_client_talks_to_central_server(
         result = {
             "invoice_number":
                 invoice_number,
-            "mid": "DT02200630-1",
-            "ifu": "00225673B",
+            "mid":
+                "DT02200630-1",
+            "ifu":
+                "00225673B",
             "signature":
                 "AGENTCOMPAT001",
             "datetime":
                 "20260918153000",
-            "invoice_counter": 101,
-            "total_counter": 201,
+            "invoice_counter":
+                101,
+            "total_counter":
+                201,
             "qr_data": (
                 "BFSECEF01;"
                 "DT02200630-1;"
@@ -411,7 +512,7 @@ def test_real_agent_client_talks_to_central_server(
         )
 
         # -------------------------------------------------
-        # 7. Vérification de la persistance centrale
+        # 9. Vérification de la persistance centrale
         # -------------------------------------------------
 
         with (
@@ -475,7 +576,7 @@ def test_real_agent_client_talks_to_central_server(
             )
 
         # -------------------------------------------------
-        # 8. Un Job terminal ne doit plus être distribué
+        # 10. Un Job terminal ne doit plus être distribué
         # -------------------------------------------------
 
         assert (

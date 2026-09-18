@@ -4,7 +4,12 @@ from fastapi.testclient import TestClient
 
 from sunsoft_secef_server.config import Settings
 from sunsoft_secef_server.main import create_app
+from sunsoft_secef_server.storage.auth_repositories import (
+    AgentCredentialRepository,
+    TenantRepository,
+)
 from sunsoft_secef_server.storage.models import (
+    Agent,
     JobStatus,
 )
 from sunsoft_secef_server.storage.repositories import (
@@ -38,23 +43,62 @@ def _create_test_app(
     )
 
 
-def _register_agent(
-    client: TestClient,
+def _provision_agent(
+    app,
     agent_uid: str,
-) -> None:
-    response = client.put(
-        (
-            f"/api/v1/agents/"
-            f"{agent_uid}/heartbeat"
-        ),
-        json={
-            "agent_uid": agent_uid,
-            "version": "0.1.0",
-            "environment": "test",
-        },
-    )
+) -> str:
+    """
+    Provisionne un Agent avec son Tenant et son credential.
 
-    assert response.status_code == 200
+    Le heartbeat ne crée plus les Agents.
+    Le token retourné permet d'appeler les routes
+    sécurisées /agents/... pendant les tests.
+    """
+
+    with (
+        app.state.database.session()
+        as session
+    ):
+        tenant = TenantRepository(
+            session
+        ).create(
+            name="CERTIFICATION API TEST",
+        )
+
+        agent = Agent(
+            tenant_id=tenant.id,
+            agent_uid=agent_uid,
+            version="0.1.0",
+            environment="test",
+        )
+
+        session.add(
+            agent
+        )
+
+        session.flush()
+
+        _, agent_token = (
+            AgentCredentialRepository(
+                session
+            ).create(
+                agent=agent
+            )
+        )
+
+        session.commit()
+
+    return agent_token
+
+
+def _agent_auth_headers(
+    token: str,
+) -> dict[str, str]:
+    return {
+        "Authorization": (
+            f"Bearer {token}"
+        ),
+    }
 
 
 def _certification_payload(
@@ -106,8 +150,8 @@ def test_create_certification_creates_job(
     )
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -194,8 +238,8 @@ def test_create_certification_is_idempotent(
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -242,8 +286,8 @@ def test_create_certification_rejects_request_conflict(
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -289,8 +333,8 @@ def test_create_certification_rejects_job_type_conflict(
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -353,8 +397,8 @@ def test_create_certification_rejects_empty_payload(
     agent_uid = _new_uid()
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -385,8 +429,8 @@ def test_get_certification_returns_pending_status(
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -462,13 +506,14 @@ def test_get_certification_returns_completed_result(
 
     agent_uid = _new_uid()
     request_uid = _new_uid()
+
     invoice_number = (
         "INV/2026/106"
     )
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        agent_token = _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -503,8 +548,10 @@ def test_get_certification_returns_completed_result(
                 "ODOOTEST001",
             "datetime":
                 "20260918170000",
-            "invoice_counter": 301,
-            "total_counter": 401,
+            "invoice_counter":
+                301,
+            "total_counter":
+                401,
             "qr_data": (
                 "BFSECEF01;"
                 "DT02200630-1;"
@@ -520,11 +567,18 @@ def test_get_certification_returns_completed_result(
                 f"{agent_uid}/jobs/"
                 f"{job_uid}/status"
             ),
+            headers=_agent_auth_headers(
+                agent_token
+            ),
             json={
-                "status": "completed",
-                "attempt_count": 1,
-                "result": result,
-                "error_message": None,
+                "status":
+                    "completed",
+                "attempt_count":
+                    1,
+                "result":
+                    result,
+                "error_message":
+                    None,
             },
         )
 
@@ -549,7 +603,10 @@ def test_get_certification_returns_completed_result(
             == "completed"
         )
 
-        assert body["result"] == result
+        assert (
+            body["result"]
+            == result
+        )
 
         assert (
             body["error_message"]
@@ -568,8 +625,8 @@ def test_get_certification_returns_unknown_status(
     request_uid = _new_uid()
 
     with TestClient(app) as client:
-        _register_agent(
-            client,
+        agent_token = _provision_agent(
+            app,
             agent_uid,
         )
 
@@ -601,10 +658,16 @@ def test_get_certification_returns_unknown_status(
                 f"{agent_uid}/jobs/"
                 f"{job_uid}/status"
             ),
+            headers=_agent_auth_headers(
+                agent_token
+            ),
             json={
-                "status": "unknown",
-                "attempt_count": 1,
-                "result": None,
+                "status":
+                    "unknown",
+                "attempt_count":
+                    1,
+                "result":
+                    None,
                 "error_message": (
                     "Résultat fiscal indéterminé."
                 ),
@@ -636,5 +699,7 @@ def test_get_certification_returns_unknown_status(
 
         assert (
             body["error_message"]
-            == "Résultat fiscal indéterminé."
+            == (
+                "Résultat fiscal indéterminé."
+            )
         )
