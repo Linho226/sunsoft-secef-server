@@ -7,6 +7,9 @@ from sunsoft_secef_server import __version__
 from sunsoft_secef_server.api.routes.agents import (
     router as agents_router,
 )
+from sunsoft_secef_server.api.routes.certifications import (
+    router as certifications_router,
+)
 from sunsoft_secef_server.api.routes.health import (
     router as health_router,
 )
@@ -62,6 +65,11 @@ def create_app(
 
     app.include_router(
         agents_router,
+        prefix="/api/v1",
+    )
+
+    app.include_router(
+        certifications_router,
         prefix="/api/v1",
     )
 
