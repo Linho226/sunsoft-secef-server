@@ -321,3 +321,13 @@ def report_job_status(
         agent_uid=normalized_agent_uid,
         job_uid=normalized_job_uid,
     )
+
+
+# Route publique de provisioning initial.
+from sunsoft_secef_server.api.routes.activation import (
+    router as activation_router,
+)
+
+router.include_router(
+    activation_router
+)

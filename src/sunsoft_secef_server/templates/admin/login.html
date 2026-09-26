@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Connexion — Sunsoft SECeF</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ request.url_for('admin-static', path='admin/admin.css') }}"
+    >
+</head>
+
+<body class="login-body">
+
+<div class="login-layout">
+
+    <section class="login-visual">
+
+        <div class="login-brand">
+            <div class="brand-mark large">S</div>
+
+            <div>
+                <div class="brand-name large-text">
+                    Sunsoft SECeF
+                </div>
+
+                <div class="brand-sub">
+                    Serveur central
+                </div>
+            </div>
+        </div>
+
+        <div class="login-message">
+            <div class="eyebrow">
+                ADMINISTRATION SÉCURISÉE
+            </div>
+
+            <h1>
+                Pilotez vos installations
+                SECeF depuis une seule
+                interface.
+            </h1>
+
+            <p>
+                Clients, sites, agents Windows
+                et activations réunis dans le
+                serveur central Sunsoft.
+            </p>
+        </div>
+
+    </section>
+
+    <section class="login-panel">
+
+        <form
+            action="{{ request.url_for('admin-login-submit') }}"
+            method="post"
+            class="login-card"
+        >
+
+            <h2>Connexion</h2>
+
+            <p class="muted">
+                Accès réservé à l'administration
+                Sunsoft SECeF.
+            </p>
+
+            {% if error %}
+            <div class="alert-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}"
+            >
+
+            <label>
+                Identifiant
+            </label>
+
+            <input
+                type="text"
+                name="username"
+                value="{{ username }}"
+                autocomplete="username"
+                required
+            >
+
+            <label>
+                Mot de passe
+            </label>
+
+            <input
+                type="password"
+                name="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Se connecter
+            </button>
+
+            <div class="login-security">
+                Connexion protégée par session
+                signée et cookie sécurisé.
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+</body>
+</html>

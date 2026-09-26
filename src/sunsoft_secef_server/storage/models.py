@@ -11,6 +11,7 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -91,11 +92,94 @@ class Tenant(Base):
         back_populates="tenant",
     )
 
+    sites: Mapped[list["Site"]] = relationship(
+        back_populates="tenant",
+        cascade="all, delete-orphan",
+    )
+
     odoo_credentials: Mapped[
         list["OdooCredential"]
     ] = relationship(
         back_populates="tenant",
         cascade="all, delete-orphan",
+    )
+
+
+class Site(Base):
+    """
+    Site physique ou logique d'un Tenant.
+
+    Un Tenant peut disposer de plusieurs Sites.
+    Chaque Agent Windows peut ?tre rattach?
+    ? un Site d?termin?.
+    """
+
+    __tablename__ = "sites"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "code",
+            name="uq_sites_tenant_code",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    tenant_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "tenants.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    site_uid: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    code: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
+
+    tenant: Mapped[Tenant] = relationship(
+        back_populates="sites",
+    )
+
+    agents: Mapped[list["Agent"]] = relationship(
+        back_populates="site",
     )
 
 
@@ -110,6 +194,16 @@ class Agent(Base):
     tenant_id: Mapped[int | None] = mapped_column(
         ForeignKey(
             "tenants.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    site_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "sites.id",
+            name="fk_agents_site_id_sites",
             ondelete="SET NULL",
         ),
         nullable=True,
@@ -154,6 +248,12 @@ class Agent(Base):
 
     tenant: Mapped[
         Tenant | None
+    ] = relationship(
+        back_populates="agents",
+    )
+
+    site: Mapped[
+        Site | None
     ] = relationship(
         back_populates="agents",
     )
@@ -519,3 +619,196 @@ Index(
     CentralJob.status,
     CentralJob.created_at,
 )
+
+
+class AgentActivationCode(Base):
+    """
+    Code ? usage unique permettant de provisionner
+    un Agent Windows pour un Tenant et un Site.
+
+    Le code brut n'est jamais stock?.
+    """
+
+    __tablename__ = "agent_activation_codes"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    activation_uid: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    tenant_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "tenants.id",
+            name=(
+                "fk_agent_activation_codes_"
+                "tenant_id_tenants"
+            ),
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    site_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "sites.id",
+            name=(
+                "fk_agent_activation_codes_"
+                "site_id_sites"
+            ),
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    code_hash: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
+
+    used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    used_by_agent_id: Mapped[
+        int | None
+    ] = mapped_column(
+        ForeignKey(
+            "agents.id",
+            name=(
+                "fk_agent_activation_codes_"
+                "used_by_agent_id_agents"
+            ),
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )
+
+
+class AgentRelease(Base):
+    """
+    Version distribuable de l'Agent Windows Sunsoft SECeF.
+
+    Le binaire reste sur le syst?me de fichiers.
+    La base conserve uniquement ses m?tadonn?es.
+    """
+
+    __tablename__ = "agent_releases"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "version",
+            name="uq_agent_releases_version",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    release_uid: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    version: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        index=True,
+    )
+
+    filename: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    storage_path: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+        unique=True,
+    )
+
+    sha256: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        index=True,
+    )
+
+    file_size: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    release_notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    is_published: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        index=True,
+    )
+
+    published_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+
+    archived_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )

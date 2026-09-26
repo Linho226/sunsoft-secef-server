@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
@@ -37,6 +37,41 @@ class Settings(BaseSettings):
     )
 
     log_level: str = "INFO"
+
+    # --------------------------------------------------
+    # Interface Web d'administration
+    # --------------------------------------------------
+
+    admin_enabled: bool = False
+
+    admin_username: str = "admin"
+
+    admin_password_hash: str | None = None
+
+    admin_session_secret: SecretStr | None = None
+
+    admin_session_https_only: bool = True
+
+    admin_session_max_age_seconds: int = Field(
+        default=28800,
+        ge=300,
+        le=86400,
+    )
+
+
+    # --------------------------------------------------
+    # Distribution Agent Windows
+    # --------------------------------------------------
+
+    agent_release_storage_dir: str = (
+        "server_data/releases/agent"
+    )
+
+    agent_release_max_upload_bytes: int = Field(
+        default=536870912,
+        ge=1048576,
+        le=2147483648,
+    )
 
 
 @lru_cache

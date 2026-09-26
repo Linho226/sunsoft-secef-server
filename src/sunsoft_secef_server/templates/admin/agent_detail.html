@@ -1,0 +1,257 @@
+﻿{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="agent-detail-page">
+
+    <div class="agent-detail-back">
+        <a href="{{ request.url_for('admin-agents') }}">
+            ← Retour aux Agents
+        </a>
+    </div>
+
+
+    <section class="agent-detail-hero">
+
+        <div>
+
+            <div class="agents-v1-eyebrow">
+                AGENT WINDOWS
+            </div>
+
+            <h1>
+                {{ agent.agent_uid }}
+            </h1>
+
+            <p>
+                {{ tenant_name }}
+                ·
+                {{ site_name }}
+            </p>
+
+        </div>
+
+
+        {% if online %}
+
+        <span class="agents-status online large">
+            <i></i>
+            En ligne
+        </span>
+
+        {% else %}
+
+        <span class="agents-status offline large">
+            <i></i>
+            Hors ligne
+        </span>
+
+        {% endif %}
+
+    </section>
+
+
+    <section class="agent-detail-grid">
+
+        <article class="agent-detail-card">
+
+            <div class="agent-detail-card-title">
+                Identification
+            </div>
+
+            <dl>
+
+                <div>
+                    <dt>
+                        Nom du poste
+                    </dt>
+                    <dd>
+                        <span class="agents-coming-badge">
+                            À venir
+                        </span>
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Agent UID
+                    </dt>
+                    <dd>
+                        <code>
+                            {{ agent.agent_uid }}
+                        </code>
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Client
+                    </dt>
+                    <dd>
+                        {{ tenant_name }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Site
+                    </dt>
+                    <dd>
+                        {{ site_name }}
+                    </dd>
+                </div>
+
+            </dl>
+
+        </article>
+
+
+        <article class="agent-detail-card">
+
+            <div class="agent-detail-card-title">
+                Installation
+            </div>
+
+            <dl>
+
+                <div>
+                    <dt>
+                        Version installée
+                    </dt>
+                    <dd>
+                        <span class="agents-version-badge">
+                            {{ agent.version }}
+                        </span>
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Environnement
+                    </dt>
+                    <dd>
+                        {{ agent.environment }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Date d'activation
+                    </dt>
+                    <dd>
+                        {{ created_at }}
+                    </dd>
+                </div>
+
+            </dl>
+
+        </article>
+
+
+        <article class="agent-detail-card">
+
+            <div class="agent-detail-card-title">
+                Connectivité
+            </div>
+
+            <dl>
+
+                <div>
+                    <dt>
+                        État
+                    </dt>
+                    <dd>
+                        {{ status_label }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Dernière connexion
+                    </dt>
+                    <dd>
+                        {{ last_seen }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Seuil hors ligne
+                    </dt>
+                    <dd>
+                        {{ heartbeat_timeout_seconds }}
+                        secondes
+                    </dd>
+                </div>
+
+            </dl>
+
+        </article>
+
+
+        <article class="agent-detail-card">
+
+            <div class="agent-detail-card-title">
+                Mise à jour
+            </div>
+
+            <dl>
+
+                <div>
+                    <dt>
+                        Version installée
+                    </dt>
+                    <dd>
+                        {{ agent.version }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        Version publiée
+                    </dt>
+                    <dd>
+                        {{ current_version or "—" }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>
+                        État
+                    </dt>
+                    <dd>
+                        <span
+                            class="
+                                agents-update
+                                {{ update_class }}
+                            "
+                        >
+                            {{ update_label }}
+                        </span>
+                    </dd>
+                </div>
+
+            </dl>
+
+        </article>
+
+    </section>
+
+
+    <section class="agent-detail-coming">
+
+        <strong>
+            Informations prévues pour une prochaine version
+        </strong>
+
+        <p>
+            Nom du poste Windows, informations système
+            supplémentaires et données de diagnostic.
+            Aucun de ces champs n'est simulé dans cette V1.
+        </p>
+
+    </section>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="client-layout">
+
+    <section class="panel client-form-panel">
+
+        <div class="panel-heading">
+            <div>
+                <h3>Nouveau site</h3>
+
+                <p>
+                    Rattachez une implantation
+                    &agrave; un client.
+                </p>
+            </div>
+        </div>
+
+
+        <form
+            method="post"
+            action="{{ request.url_for('admin-site-create') }}"
+            class="admin-form"
+        >
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}"
+            >
+
+            {% if error %}
+            <div class="alert-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert-success">
+                Site cr&eacute;&eacute; avec succ&egrave;s.
+            </div>
+            {% endif %}
+
+
+            {% if tenants %}
+
+            <div class="form-field">
+
+                <label for="tenant_uid">
+                    Client
+                </label>
+
+                <select
+                    id="tenant_uid"
+                    name="tenant_uid"
+                    required
+                >
+
+                    <option value="">
+                        S&eacute;lectionner un client
+                    </option>
+
+                    {% for tenant in tenants %}
+
+                    <option
+                        value="{{ tenant.tenant_uid }}"
+                        {% if tenant.tenant_uid == selected_tenant_uid %}
+                        selected
+                        {% endif %}
+                    >
+                        {{ tenant.name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-field">
+
+                <label for="site-code">
+                    Code du site
+                </label>
+
+                <input
+                    id="site-code"
+                    type="text"
+                    name="code"
+                    value="{{ form_code }}"
+                    placeholder="Ex. SIEGE"
+                    maxlength="100"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-field">
+
+                <label for="site-name">
+                    Nom du site
+                </label>
+
+                <input
+                    id="site-name"
+                    type="text"
+                    name="name"
+                    value="{{ form_name }}"
+                    placeholder="Ex. Si&egrave;ge Ouagadougou"
+                    maxlength="255"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="action-button"
+            >
+                + Cr&eacute;er le site
+            </button>
+
+            {% else %}
+
+            <div class="alert-error">
+                Aucun client actif disponible.
+            </div>
+
+            {% endif %}
+
+        </form>
+
+    </section>
+
+
+    <section class="panel client-list-panel">
+
+        <div class="panel-heading">
+            <div>
+                <h3>Sites enregistr&eacute;s</h3>
+
+                <p>
+                    {{ sites|length }}
+                    site(s)
+                </p>
+            </div>
+        </div>
+
+
+        {% if sites %}
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Site</th>
+                        <th>Code</th>
+                        <th>Client</th>
+                        <th>UID</th>
+                        <th>&Eacute;tat</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for site in sites %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ site.name }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ site.code }}
+                        </td>
+
+                        <td>
+                            {{ site.tenant_name }}
+                        </td>
+
+                        <td class="mono">
+                            {{ site.uid }}
+                        </td>
+
+                        <td>
+                            <span class="status-badge active">
+                                {{ site.state }}
+                            </span>
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state large">
+            Aucun site enregistr&eacute;.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

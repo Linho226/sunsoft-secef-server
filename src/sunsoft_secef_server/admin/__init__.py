@@ -1,0 +1,1 @@
+"""Interface Web d'administration Sunsoft SECeF."""

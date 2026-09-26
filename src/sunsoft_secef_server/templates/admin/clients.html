@@ -1,0 +1,148 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="client-layout">
+
+    <section class="panel client-form-panel">
+
+        <div class="panel-heading">
+            <div>
+                <h3>Nouveau client</h3>
+                <p>
+                    Enregistrez une entreprise
+                    dans le serveur central.
+                </p>
+            </div>
+        </div>
+
+        <form
+            method="post"
+            action="{{ request.url_for('admin-client-create') }}"
+            class="admin-form"
+        >
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}"
+            >
+
+            {% if error %}
+            <div class="alert-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert-success">
+                Client cr&eacute;&eacute; avec succ&egrave;s.
+            </div>
+            {% endif %}
+
+            <div class="form-field">
+
+                <label for="client-name">
+                    Nom du client
+                </label>
+
+                <input
+                    id="client-name"
+                    type="text"
+                    name="name"
+                    value="{{ form_name }}"
+                    placeholder="Ex. SUNSOFT INTERNATIONAL SARL"
+                    maxlength="255"
+                    required
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="action-button"
+            >
+                + Cr&eacute;er le client
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <section class="panel client-list-panel">
+
+        <div class="panel-heading">
+            <div>
+                <h3>Clients enregistr&eacute;s</h3>
+                <p>
+                    {{ clients|length }}
+                    entreprise(s)
+                </p>
+            </div>
+        </div>
+
+        {% if clients %}
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>UID</th>
+                        <th>&Eacute;tat</th>
+                        <th>Cr&eacute;&eacute; le</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for client in clients %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ client.name }}
+                            </strong>
+                        </td>
+
+                        <td class="mono">
+                            {{ client.uid }}
+                        </td>
+
+                        <td>
+                            <span class="status-badge active">
+                                {{ client.state }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ client.created_at }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state large">
+            Aucun client enregistr?.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

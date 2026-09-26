@@ -1,0 +1,264 @@
+﻿{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="agents-v1-page">
+
+    <section class="agents-v1-header">
+
+        <div>
+            <div class="agents-v1-eyebrow">
+                SUPERVISION AGENTS — V1
+            </div>
+
+            <h1>
+                Agents Windows
+            </h1>
+
+            <p>
+                Suivi des installations Sunsoft SECeF
+                provisionnées sur les postes clients.
+            </p>
+        </div>
+
+        {% if current_version %}
+        <div class="agents-v1-target">
+            <span>
+                VERSION PUBLIÉE
+            </span>
+
+            <strong>
+                {{ current_version }}
+            </strong>
+        </div>
+        {% endif %}
+
+    </section>
+
+
+    <section class="agents-v1-coming">
+
+        <div class="agents-v1-coming-icon">
+            i
+        </div>
+
+        <div>
+            <strong>
+                Fonctionnalités complémentaires à venir
+            </strong>
+
+            <p>
+                Le nom du poste et certaines informations
+                système seront remontés par une prochaine
+                version de l'Agent Windows.
+            </p>
+        </div>
+
+    </section>
+
+
+    <section class="agents-v1-stats">
+
+        <article>
+            <span>
+                AGENTS
+            </span>
+            <strong>
+                {{ agent_count }}
+            </strong>
+        </article>
+
+        <article>
+            <span>
+                EN LIGNE
+            </span>
+            <strong class="agents-number-online">
+                {{ online_count }}
+            </strong>
+        </article>
+
+        <article>
+            <span>
+                HORS LIGNE
+            </span>
+            <strong>
+                {{ offline_count }}
+            </strong>
+        </article>
+
+        <article>
+            <span>
+                DÉLAI DE SUPERVISION
+            </span>
+            <strong>
+                {{ heartbeat_timeout_seconds }} s
+            </strong>
+        </article>
+
+    </section>
+
+
+    <section class="agents-v1-panel">
+
+        <div class="agents-v1-panel-header">
+
+            <div>
+                <h2>
+                    Parc d'Agents
+                </h2>
+
+                <p>
+                    État actuel des installations
+                    enregistrées sur le serveur central.
+                </p>
+            </div>
+
+        </div>
+
+
+        {% if rows %}
+
+        <div class="agents-v1-table-wrap">
+
+            <table class="agents-v1-table">
+
+                <thead>
+                    <tr>
+                        <th>Poste</th>
+                        <th>Client</th>
+                        <th>Site</th>
+                        <th>Agent UID</th>
+                        <th>Version</th>
+                        <th>Statut</th>
+                        <th>Dernière connexion</th>
+                        <th>Activation</th>
+                        <th>Mise à jour</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for row in rows %}
+
+                    <tr>
+
+                        <td>
+                            <span class="agents-coming-badge">
+                                À venir
+                            </span>
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ row.tenant_name }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ row.site_name }}
+                        </td>
+
+                        <td>
+                            <code
+                                class="agents-v1-uid"
+                                title="{{ row.agent_uid }}"
+                            >
+                                {{ row.agent_uid }}
+                            </code>
+                        </td>
+
+                        <td>
+                            <span class="agents-version-badge">
+                                {{ row.version }}
+                            </span>
+                        </td>
+
+                        <td>
+
+                            {% if row.online %}
+
+                            <span class="agents-status online">
+                                <i></i>
+                                En ligne
+                            </span>
+
+                            {% else %}
+
+                            <span class="agents-status offline">
+                                <i></i>
+                                Hors ligne
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ row.last_seen }}
+                        </td>
+
+                        <td>
+                            {{ row.created_at }}
+                        </td>
+
+                        <td>
+
+                            <span
+                                class="
+                                    agents-update
+                                    {{ row.update_class }}
+                                "
+                            >
+                                {{ row.update_label }}
+                            </span>
+
+                        </td>
+
+                        <td class="agents-v1-action">
+
+                            <a
+                                href="{{ row.detail_url }}"
+                                class="agents-view-button"
+                            >
+                                Voir
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="agents-v1-empty">
+
+            <div class="agents-v1-empty-icon">
+                ◌
+            </div>
+
+            <h3>
+                Aucun Agent provisionné
+            </h3>
+
+            <p>
+                Un Agent apparaîtra ici après
+                l'activation d'une installation Windows.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

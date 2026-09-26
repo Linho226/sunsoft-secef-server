@@ -1,0 +1,488 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="activation-layout">
+
+    <section class="panel activation-form-panel">
+
+        <div class="panel-heading">
+            <div>
+                <h3>
+                    G&eacute;n&eacute;rer un code
+                </h3>
+
+                <p>
+                    Cr&eacute;ez un code &agrave; usage unique
+                    pour l'Agent Windows.
+                </p>
+            </div>
+        </div>
+
+
+        <form
+            method="post"
+            action="{{ request.url_for('admin-activation-create') }}"
+            class="admin-form"
+        >
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}"
+            >
+
+            {% if error %}
+
+            <div class="alert-error">
+                {{ error }}
+            </div>
+
+            {% endif %}
+
+
+            {% if tenants and sites %}
+
+            <div class="form-field">
+
+                <label for="activation-tenant">
+                    Client
+                </label>
+
+                <select
+                    id="activation-tenant"
+                    name="tenant_uid"
+                    required
+                >
+
+                    <option value="">
+                        S&eacute;lectionner un client
+                    </option>
+
+                    {% for tenant in tenants %}
+
+                    <option
+                        value="{{ tenant.tenant_uid }}"
+                        {% if tenant.tenant_uid == selected_tenant_uid %}
+                        selected
+                        {% endif %}
+                    >
+                        {{ tenant.name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-field">
+
+                <label for="activation-site">
+                    Site
+                </label>
+
+                <select
+                    id="activation-site"
+                    name="site_uid"
+                    required
+                >
+
+                    <option value="">
+                        S&eacute;lectionner un site
+                    </option>
+
+                    {% for site in sites %}
+
+                    <option
+                        value="{{ site.uid }}"
+                        data-tenant="{{ site.tenant_uid }}"
+                        {% if site.uid == selected_site_uid %}
+                        selected
+                        {% endif %}
+                    >
+                        {{ site.code }}
+                        &mdash; {{ site.name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-field">
+
+                <label for="activation-duration">
+                    Validit&eacute;
+                </label>
+
+                <select
+                    id="activation-duration"
+                    name="expires_in_minutes"
+                    required
+                >
+
+                    {% for value, label in [
+                        (15, "15 minutes"),
+                        (30, "30 minutes"),
+                        (60, "1 heure"),
+                        (120, "2 heures"),
+                        (240, "4 heures"),
+                        (480, "8 heures"),
+                        (1440, "24 heures")
+                    ] %}
+
+                    <option
+                        value="{{ value }}"
+                        {% if value == selected_minutes %}
+                        selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="action-button"
+            >
+                G&eacute;n&eacute;rer le code d'activation
+            </button>
+
+
+            <div class="security-note">
+                Le code secret sera affich&eacute;
+                une seule fois.
+            </div>
+
+            {% else %}
+
+            <div class="alert-error">
+                Aucun client/site actif disponible.
+            </div>
+
+            {% endif %}
+
+        </form>
+
+
+        {% if generated_code %}
+
+        <div class="activation-result">
+
+            <div class="activation-success">
+                Code g&eacute;n&eacute;r&eacute; avec succ&egrave;s
+            </div>
+
+
+            <div class="activation-code-box">
+
+                <code id="activation-code">{{ generated_code }}</code>
+
+                <button
+                    type="button"
+                    id="copy-code"
+                    class="copy-button"
+                >
+                    Copier
+                </button>
+
+            </div>
+
+
+            <div class="activation-details">
+
+                <div>
+                    <span>UID</span>
+                    <strong>
+                        {{ generated_uid }}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Expiration</span>
+                    <strong>
+                        {{ generated_expires_at }}
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="security-warning">
+                Copiez ce code maintenant.
+                Il ne sera plus affich&mdash; apr&mdash;s
+                avoir quitt&mdash; cette page.
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section class="panel activation-list-panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <h3>
+                    Historique des activations
+                </h3>
+
+                <p>
+                    Aucun secret n'est conserv&eacute;
+                    en clair.
+                </p>
+            </div>
+
+        </div>
+
+
+        {% if activations %}
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>UID</th>
+                        <th>Client</th>
+                        <th>Site</th>
+                        <th>&Eacute;tat</th>
+                        <th>Expiration</th>
+                        <th>Agent</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for activation in activations %}
+
+                    <tr>
+
+                        <td class="mono">
+                            {{ activation.uid }}
+                        </td>
+
+                        <td>
+                            {{ activation.tenant_name }}
+                        </td>
+
+                        <td>
+                            {{ activation.site_code }}
+                            &mdash; {{ activation.site_name }}
+                        </td>
+
+                        <td>
+                            <span class="status-badge active">
+                                {{ activation.state }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ activation.expires_at }}
+                        </td>
+
+                        <td class="mono">
+                            {{ activation.agent_uid or '&mdash;' | safe }}
+                        </td>
+
+                        <td>
+
+                            {% if activation.state == "Disponible" %}
+
+                            <form
+                                method="post"
+                                action="{{ request.url_for(
+                                    'admin-activation-revoke',
+                                    activation_uid=activation.uid
+                                ) }}"
+                                class="revoke-form"
+                                onsubmit="return confirm(
+                                    'R&eacute;voquer d?finitivement ce code ?'
+                                );"
+                            >
+
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="{{ csrf_token }}"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="revoke-button"
+                                >
+                                    R&eacute;voquer
+                                </button>
+
+                            </form>
+
+                            {% else %}
+
+                            <span class="muted-action">
+                                ?
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state large">
+            Aucun code d'activation.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+
+<script>
+(function () {
+
+    const tenant = document.getElementById(
+        "activation-tenant"
+    );
+
+    const site = document.getElementById(
+        "activation-site"
+    );
+
+
+    function filterSites() {
+
+        if (!tenant || !site) {
+            return;
+        }
+
+        const tenantUid = tenant.value;
+
+        let selectedStillValid = false;
+
+        Array.from(
+            site.options
+        ).forEach(
+            function (option) {
+
+                if (!option.value) {
+                    return;
+                }
+
+                const valid = (
+                    option.dataset.tenant
+                    === tenantUid
+                );
+
+                option.hidden = !valid;
+                option.disabled = !valid;
+
+                if (
+                    valid
+                    && option.selected
+                ) {
+                    selectedStillValid = true;
+                }
+            }
+        );
+
+        if (!selectedStillValid) {
+            site.value = "";
+        }
+    }
+
+
+    if (tenant && site) {
+
+        tenant.addEventListener(
+            "change",
+            filterSites
+        );
+
+        filterSites();
+    }
+
+
+    const copyButton = document.getElementById(
+        "copy-code"
+    );
+
+    const code = document.getElementById(
+        "activation-code"
+    );
+
+
+    if (copyButton && code) {
+
+        copyButton.addEventListener(
+            "click",
+            async function () {
+
+                const value = (
+                    code.textContent.trim()
+                );
+
+                try {
+
+                    await navigator.clipboard.writeText(
+                        value
+                    );
+
+                    copyButton.textContent =
+                        "Copi\u00e9 \u2713";
+
+                } catch (error) {
+
+                    const range =
+                        document.createRange();
+
+                    range.selectNodeContents(
+                        code
+                    );
+
+                    const selection =
+                        window.getSelection();
+
+                    selection.removeAllRanges();
+
+                    selection.addRange(
+                        range
+                    );
+
+                    copyButton.textContent =
+                        "S\u00e9lectionn\u00e9";
+                }
+            }
+        );
+    }
+
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <title>{{ title }} — Sunsoft SECeF</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ request.url_for('admin-static', path='admin/admin.css') }}"
+    >
+</head>
+<body class="admin-body">
+
+<div class="shell">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-mark">S</div>
+
+            <div>
+                <div class="brand-name">
+                    Sunsoft SECeF
+                </div>
+                <div class="brand-sub">
+                    Administration
+                </div>
+            </div>
+        </div>
+
+        <nav class="nav">
+
+            <a href="{{ request.url_for('admin-dashboard') }}">
+                <span>⌂</span>
+                Tableau de bord
+            </a>
+
+            <a href="{{ request.url_for('admin-clients') }}">
+                <span>▣</span>
+                Clients
+            </a>
+
+            <a href="{{ request.url_for('admin-sites') }}">
+                <span>◆</span>
+                Sites
+            </a>
+
+            <a href="{{ request.url_for('admin-agents') }}">
+                <span>◉</span>
+                Agents
+            </a>
+
+            <a href="{{ request.url_for('admin-activations') }}">
+                <span>⌁</span>
+                Activations
+            </a>
+
+            <a href="{{ request.url_for('admin-agent-windows') }}">
+                <span>&#8681;</span>
+                Agent Windows
+            </a>
+
+
+        </nav>
+
+        <form
+            action="{{ request.url_for('admin-logout') }}"
+            method="post"
+            class="logout-form"
+        >
+            <button type="submit">
+                Déconnexion
+            </button>
+        </form>
+
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+                <h1>{{ title }}</h1>
+            </div>
+
+            <div class="account">
+                <div class="account-dot"></div>
+
+                <div>
+                    <strong>
+                        {{ admin_username }}
+                    </strong>
+                    <span>
+                        Administrateur
+                    </span>
+                </div>
+            </div>
+
+        </header>
+
+        <section class="content">
+            {% block content %}{% endblock %}
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
