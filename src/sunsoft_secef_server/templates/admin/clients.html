@@ -143,6 +143,91 @@
 
     </section>
 
+
+    <section class="panel client-list-panel">
+        <div class="panel-heading">
+            <div>
+                <h3>Acc?s Odoo</h3>
+                <p>Associez une soci?t? Odoo ? son client SECeF.</p>
+            </div>
+        </div>
+
+        {% if credential_error %}
+        <div class="alert-error">{{ credential_error }}</div>
+        {% endif %}
+
+        {% if generated_token %}
+        <div class="alert-success">
+            <strong>Copiez ce token maintenant : il ne sera plus affich?.</strong>
+            <p class="mono">{{ generated_token }}</p>
+            <p>UID de cet acc?s : {{ generated_uid }}</p>
+        </div>
+        {% endif %}
+
+        <form method="post"
+              action="{{ request.url_for('admin-odoo-credential-create') }}"
+              class="admin-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-field">
+                <label for="odoo-client">Client SECeF</label>
+                <select id="odoo-client" name="tenant_uid" required>
+                    <option value="">Choisir un client</option>
+                    {% for client in clients %}
+                    <option value="{{ client.uid }}">
+                        {{ client.name }} ? {{ client.uid }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="action-button">
+                G?n?rer un token Odoo
+            </button>
+        </form>
+
+        {% if odoo_credentials %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>UID acc?s</th>
+                        <th>?tat</th>
+                        <th>Derni?re utilisation</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for access in odoo_credentials %}
+                    <tr>
+                        <td>{{ access.client }}</td>
+                        <td class="mono">{{ access.uid }}</td>
+                        <td>{{ "Actif" if access.active else "R?voqu?" }}</td>
+                        <td>{{ access.last_used_at }}</td>
+                        <td>
+                            {% if access.active %}
+                            <form method="post"
+                                  action="{{ request.url_for(
+                                      'admin-odoo-credential-revoke',
+                                      credential_uid=access.uid
+                                  ) }}">
+                                <input type="hidden"
+                                       name="csrf_token"
+                                       value="{{ csrf_token }}">
+                                <button type="submit"
+                                        onclick="return confirm('R?voquer cet acc?s Odoo ?')">
+                                    R?voquer
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </section>
+
 </div>
 
 {% endblock %}

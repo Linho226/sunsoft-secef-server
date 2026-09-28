@@ -37,6 +37,7 @@ from sunsoft_secef_server.storage.auth_repositories import (
     ActivationCodeError,
     AgentActivationCodeRepository,
     AuthRepositoryError,
+    OdooCredentialRepository,
     SiteRepository,
     TenantRepository,
 )
@@ -47,6 +48,7 @@ from sunsoft_secef_server.storage.release_repositories import (
 from sunsoft_secef_server.storage.models import (
     Agent,
     AgentActivationCode,
+    OdooCredential,
     Site,
     Tenant,
     utc_now,
@@ -470,6 +472,9 @@ def _render_clients(
     *,
     error: str | None = None,
     form_name: str = "",
+    credential_error: str | None = None,
+    generated_token: str | None = None,
+    generated_uid: str | None = None,
 ):
     tenants = list(
         session.scalars(
@@ -510,6 +515,26 @@ def _render_clients(
             ],
             "error": error,
             "form_name": form_name,
+            "credential_error": credential_error,
+            "generated_token": generated_token,
+            "generated_uid": generated_uid,
+            "odoo_credentials": [
+                {
+                    "uid": item.credential_uid,
+                    "client": item.tenant.name,
+                    "active": item.is_active,
+                    "last_used_at": (
+                        _fmt_datetime(item.last_used_at)
+                        if item.last_used_at else "Jamais"
+                    ),
+                }
+                for item in session.scalars(
+                    select(OdooCredential).order_by(
+                        OdooCredential.created_at.desc(),
+                        OdooCredential.id.desc(),
+                    )
+                )
+            ],
             "success": (
                 request.query_params.get(
                     "created"
@@ -707,6 +732,93 @@ def _render_sites(
         request=request,
         name="admin/sites.html",
         context=context,
+    )
+
+
+
+@router.post(
+    "/clients/odoo-credentials",
+    response_class=HTMLResponse,
+    name="admin-odoo-credential-create",
+)
+def create_odoo_credential_admin(
+    request: Request,
+    session: SessionDependency,
+    tenant_uid: Annotated[str, Form()],
+    csrf_token: Annotated[str, Form()],
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    if not verify_csrf_token(request, csrf_token):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Jeton CSRF invalide.",
+        )
+
+    try:
+        tenant = TenantRepository(session).require_by_uid(
+            tenant_uid
+        )
+        credential, token = OdooCredentialRepository(
+            session
+        ).create(tenant=tenant)
+    except (AuthRepositoryError, ValueError) as exc:
+        session.rollback()
+        response = _render_clients(
+            request, session,
+            credential_error=str(exc),
+        )
+    else:
+        response = _render_clients(
+            request, session,
+            generated_token=token,
+            generated_uid=credential.credential_uid,
+        )
+
+    response.headers["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate"
+    )
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
+
+
+@router.post(
+    "/clients/odoo-credentials/{credential_uid}/revoke",
+    response_class=HTMLResponse,
+    name="admin-odoo-credential-revoke",
+)
+def revoke_odoo_credential_admin(
+    credential_uid: str,
+    request: Request,
+    session: SessionDependency,
+    csrf_token: Annotated[str, Form()],
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    if not verify_csrf_token(request, csrf_token):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Jeton CSRF invalide.",
+        )
+
+    try:
+        OdooCredentialRepository(session).revoke(
+            credential_uid
+        )
+    except (AuthRepositoryError, ValueError) as exc:
+        session.rollback()
+        return _render_clients(
+            request, session,
+            credential_error=str(exc),
+        )
+
+    return RedirectResponse(
+        url="/admin/clients",
+        status_code=status.HTTP_303_SEE_OTHER,
     )
 
 

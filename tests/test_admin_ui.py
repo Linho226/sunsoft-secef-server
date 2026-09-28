@@ -821,3 +821,90 @@ def test_admin_can_revoke_activation(
         assert page.status_code == 200
 
         assert "Inactif" in page.text
+
+
+def test_admin_odoo_token_lifecycle(tmp_path):
+    from sqlalchemy import select
+    from sunsoft_secef_server.storage.auth_repositories import (
+        OdooCredentialRepository,
+    )
+    from sunsoft_secef_server.storage.models import Tenant
+
+    app = create_app(_settings(tmp_path))
+
+    with TestClient(app, follow_redirects=False) as client:
+        login = client.get("/admin/login")
+        assert login.status_code == 200
+
+        signed_in = client.post(
+            "/admin/login",
+            data={
+                "username": "admin",
+                "password": "Admin-Test-Password-2026",
+                "csrf_token": _csrf(login.text),
+            },
+        )
+        assert signed_in.status_code == 303
+
+        clients_page = client.get("/admin/clients")
+        assert clients_page.status_code == 200
+        csrf = _csrf(clients_page.text)
+
+        created_client = client.post(
+            "/admin/clients",
+            data={
+                "name": "Client Odoo de test",
+                "csrf_token": csrf,
+            },
+        )
+        assert created_client.status_code == 303
+
+        with app.state.database.session() as session:
+            tenant = session.scalar(select(Tenant))
+            assert tenant is not None
+            tenant_uid = tenant.tenant_uid
+
+        rejected = client.post(
+            "/admin/clients/odoo-credentials",
+            data={"tenant_uid": tenant_uid, "csrf_token": "invalid"},
+        )
+        assert rejected.status_code == 403
+
+        created = client.post(
+            "/admin/clients/odoo-credentials",
+            data={"tenant_uid": tenant_uid, "csrf_token": csrf},
+        )
+        assert created.status_code == 200
+        assert created.headers["cache-control"].startswith("no-store")
+        assert "Copiez ce token maintenant" in created.text
+
+        match = re.search(
+            r'<p class="mono">([^<]+)</p>',
+            created.text,
+        )
+        assert match is not None
+        token = match.group(1).strip()
+
+        with app.state.database.session() as session:
+            credential = OdooCredentialRepository(
+                session
+            ).authenticate(token)
+            assert credential is not None
+            assert credential.tenant_id == tenant.id
+            credential_uid = credential.credential_uid
+
+        refreshed = client.get("/admin/clients")
+        assert refreshed.status_code == 200
+        assert token not in refreshed.text
+        assert credential_uid in refreshed.text
+
+        revoked = client.post(
+            f"/admin/clients/odoo-credentials/{credential_uid}/revoke",
+            data={"csrf_token": _csrf(refreshed.text)},
+        )
+        assert revoked.status_code == 303
+
+        with app.state.database.session() as session:
+            assert OdooCredentialRepository(
+                session
+            ).authenticate(token) is None
