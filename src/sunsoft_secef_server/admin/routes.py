@@ -551,6 +551,113 @@ def _render_clients(
     )
 
 
+def _render_odoo(
+    request: Request,
+    session,
+    *,
+    credential_error: str | None = None,
+    generated_token: str | None = None,
+    generated_uid: str | None = None,
+):
+    tenants = list(
+        session.scalars(
+            select(Tenant).order_by(
+                Tenant.name,
+                Tenant.id,
+            )
+        )
+    )
+
+    credentials = list(
+        session.scalars(
+            select(OdooCredential).order_by(
+                OdooCredential.created_at.desc(),
+                OdooCredential.id.desc(),
+            )
+        )
+    )
+
+    odoo_credentials = []
+
+    for item in credentials:
+        if not item.is_active:
+            connection_status = "R?voqu?"
+
+        elif item.last_used_at is None:
+            connection_status = "Jamais connect?"
+
+        elif _agent_is_online(
+            item.last_used_at,
+            timeout_seconds=180,
+        ):
+            connection_status = "En ligne"
+
+        else:
+            connection_status = "Hors ligne"
+
+        odoo_credentials.append(
+            {
+                "uid": item.credential_uid,
+                "client": item.tenant.name,
+                "active": item.is_active,
+                "connection_status": connection_status,
+                "last_used_at": (
+                    _fmt_datetime(item.last_used_at)
+                    if item.last_used_at
+                    else "Jamais"
+                ),
+            }
+        )
+
+    context = _base_context(
+        request,
+        title="Odoo",
+    )
+
+    context.update(
+        {
+            "csrf_token": ensure_csrf_token(request),
+            "clients": [
+                {
+                    "name": tenant.name,
+                    "uid": tenant.tenant_uid,
+                }
+                for tenant in tenants
+            ],
+            "credential_error": credential_error,
+            "generated_token": generated_token,
+            "generated_uid": generated_uid,
+            "odoo_credentials": odoo_credentials,
+        }
+    )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/odoo.html",
+        context=context,
+    )
+
+
+@router.get(
+    "/odoo",
+    response_class=HTMLResponse,
+    name="admin-odoo",
+)
+def odoo_admin(
+    request: Request,
+    session: SessionDependency,
+):
+    redirect = _require_admin(request)
+
+    if redirect is not None:
+        return redirect
+
+    return _render_odoo(
+        request,
+        session,
+    )
+
+
 @router.get(
     "/clients",
     response_class=HTMLResponse,
@@ -737,7 +844,7 @@ def _render_sites(
 
 
 @router.post(
-    "/clients/odoo-credentials",
+    "/odoo/credentials",
     response_class=HTMLResponse,
     name="admin-odoo-credential-create",
 )
@@ -766,12 +873,12 @@ def create_odoo_credential_admin(
         ).create(tenant=tenant)
     except (AuthRepositoryError, ValueError) as exc:
         session.rollback()
-        response = _render_clients(
+        response = _render_odoo(
             request, session,
             credential_error=str(exc),
         )
     else:
-        response = _render_clients(
+        response = _render_odoo(
             request, session,
             generated_token=token,
             generated_uid=credential.credential_uid,
@@ -785,7 +892,7 @@ def create_odoo_credential_admin(
 
 
 @router.post(
-    "/clients/odoo-credentials/{credential_uid}/revoke",
+    "/odoo/credentials/{credential_uid}/revoke",
     response_class=HTMLResponse,
     name="admin-odoo-credential-revoke",
 )
@@ -811,13 +918,13 @@ def revoke_odoo_credential_admin(
         )
     except (AuthRepositoryError, ValueError) as exc:
         session.rollback()
-        return _render_clients(
+        return _render_odoo(
             request, session,
             credential_error=str(exc),
         )
 
     return RedirectResponse(
-        url="/admin/clients",
+        url="/admin/odoo",
         status_code=status.HTTP_303_SEE_OTHER,
     )
 

@@ -1,0 +1,172 @@
+{% extends "admin/base.html" %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/odoo.css') }}?v=20261002-3">
+{% endblock %}
+
+{% block content %}
+<div class="odoo-page">
+    <section class="panel odoo-card" aria-labelledby="odoo-access-title">
+        <header class="odoo-heading">
+            <div class="odoo-heading-icon" aria-hidden="true">O</div>
+            <div>
+                <p class="odoo-eyebrow">CONNEXION DE LA PLATEFORME</p>
+                <h2 id="odoo-access-title">Accès Odoo</h2>
+                <p>Gérez les accès des instances Odoo à la plateforme centrale Sunsoft SECeF.</p>
+            </div>
+        </header>
+
+        {% if credential_error %}
+        <div class="odoo-notice is-error" role="alert">
+            <span class="odoo-notice-icon" aria-hidden="true">!</span>
+            <span>{{ credential_error }}</span>
+        </div>
+        {% endif %}
+
+        {% if generated_token %}
+        <section class="odoo-token-card" aria-labelledby="odoo-token-title">
+            <div class="odoo-token-heading">
+                <div>
+                    <p class="odoo-eyebrow">NOUVEL ACCÈS CRÉÉ</p>
+                    <h3 id="odoo-token-title">Copiez et conservez ce token</h3>
+                    <p>Il ne sera plus affiché après avoir quitté cette page.</p>
+                </div>
+                <span class="odoo-token-badge">À conserver</span>
+            </div>
+            <div class="odoo-token-row">
+                <code id="generated-odoo-token" class="odoo-token-value">{{ generated_token }}</code>
+                <button class="odoo-copy-button" type="button" data-copy-target="generated-odoo-token">
+                    <span aria-hidden="true">⧉</span> Copier le token
+                </button>
+            </div>
+            <div class="odoo-uid-row">
+                <span>UID de cet accès</span>
+                <code id="generated-odoo-uid">{{ generated_uid }}</code>
+                <button class="odoo-copy-uid" type="button" data-copy-target="generated-odoo-uid">Copier l’UID</button>
+            </div>
+            <p class="odoo-copy-feedback" role="status" aria-live="polite"></p>
+        </section>
+        {% endif %}
+
+        <form method="post" action="{{ request.url_for('admin-odoo-credential-create') }}" class="admin-form odoo-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-field">
+                <label for="odoo-client">Client SECeF</label>
+                <select id="odoo-client" name="tenant_uid" required>
+                    <option value="">Choisir un client</option>
+                    {% for client in clients %}
+                    <option value="{{ client.uid }}">{{ client.name }} — {{ client.uid }}</option>
+                    {% endfor %}
+                </select>
+                <small>Le token permettra à cette instance Odoo de communiquer avec le serveur central.</small>
+            </div>
+            <button type="submit" class="action-button odoo-submit-button">
+                Générer un token Odoo <span aria-hidden="true">→</span>
+            </button>
+        </form>
+    </section>
+
+    <section class="panel odoo-card odoo-instances-card" aria-labelledby="odoo-instances-title">
+        <header class="odoo-heading odoo-list-heading">
+            <div class="odoo-heading-icon is-list" aria-hidden="true">⌁</div>
+            <div>
+                <p class="odoo-eyebrow">ACCÈS ENREGISTRÉS</p>
+                <h2 id="odoo-instances-title">Instances Odoo</h2>
+                <p>État des accès et dernière communication avec le serveur central.</p>
+            </div>
+            {% if odoo_credentials %}
+            <span class="odoo-count">{{ odoo_credentials|length }} accès</span>
+            {% endif %}
+        </header>
+
+        {% if odoo_credentials %}
+        <div class="table-wrapper odoo-table-wrapper">
+            <table class="odoo-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Client</th>
+                        <th scope="col">UID d’accès</th>
+                        <th scope="col">Token</th>
+                        <th scope="col">Connexion</th>
+                        <th scope="col">Dernière communication</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for access in odoo_credentials %}
+                    <tr>
+                        <td data-label="Client"><strong>{{ access.client }}</strong></td>
+                        <td data-label="UID d’accès"><code class="odoo-table-uid">{{ access.uid }}</code></td>
+                        <td data-label="Token">
+                            {% if access.active %}
+                            <span class="odoo-status is-active"><i aria-hidden="true"></i> Actif</span>
+                            {% else %}
+                            <span class="odoo-status is-revoked"><i aria-hidden="true"></i> Révoqué</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Connexion">{{ access.connection_status }}</td>
+                        <td data-label="Dernière communication">{{ access.last_used_at }}</td>
+                        <td data-label="Action">
+                            {% if access.active %}
+                            <form method="post" action="{{ request.url_for('admin-odoo-credential-revoke', credential_uid=access.uid) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="odoo-revoke-button" onclick="return confirm('Révoquer cet accès Odoo ?')">Révoquer</button>
+                            </form>
+                            {% else %}
+                            <span class="odoo-no-action">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="odoo-empty-state">
+            <span class="odoo-empty-icon" aria-hidden="true">⌁</span>
+            <h3>Aucun accès Odoo pour le moment</h3>
+            <p>Les accès générés apparaîtront ici avec leur état de connexion.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+(() => {
+    const copyButtons = document.querySelectorAll('[data-copy-target]');
+    const feedback = document.querySelector('.odoo-copy-feedback');
+
+    async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+        const temporaryInput = document.createElement('textarea');
+        temporaryInput.value = text;
+        temporaryInput.setAttribute('readonly', '');
+        temporaryInput.style.position = 'fixed';
+        temporaryInput.style.opacity = '0';
+        document.body.appendChild(temporaryInput);
+        temporaryInput.select();
+        const copied = document.execCommand('copy');
+        temporaryInput.remove();
+        if (!copied) throw new Error('Copy failed');
+    }
+
+    copyButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            const target = document.getElementById(button.dataset.copyTarget);
+            if (!target) return;
+            try {
+                await copyText(target.textContent.trim());
+                if (feedback) feedback.textContent = button.dataset.copyTarget === 'generated-odoo-token'
+                    ? 'Token copié dans le presse-papiers.'
+                    : 'UID copié dans le presse-papiers.';
+            } catch {
+                if (feedback) feedback.textContent = 'Copie impossible. Sélectionnez le texte puis copiez-le manuellement.';
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -24,6 +24,9 @@ from sunsoft_secef_server.api.routes.certifications import (
 from sunsoft_secef_server.api.routes.health import (
     router as health_router,
 )
+from sunsoft_secef_server.api.routes.odoo import (
+    router as odoo_router,
+)
 from sunsoft_secef_server.api.routes.downloads import (
     router as downloads_router,
 )
@@ -136,6 +139,11 @@ def create_app(
 
     app.include_router(
         certifications_router,
+        prefix="/api/v1",
+    )
+
+    app.include_router(
+        odoo_router,
         prefix="/api/v1",
     )
 

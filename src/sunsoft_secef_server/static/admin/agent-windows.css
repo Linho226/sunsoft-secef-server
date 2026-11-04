@@ -1,0 +1,1045 @@
+.release-page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.release-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 24px;
+    padding: 28px;
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            135deg,
+            #0b2342,
+            #123a69
+        );
+    color: #ffffff;
+    box-shadow:
+        0 14px 40px
+        rgba(15, 35, 60, .12);
+}
+
+.release-hero h2 {
+    margin: 8px 0 8px;
+    font-size: 26px;
+}
+
+.release-hero p {
+    max-width: 650px;
+    margin: 0;
+    opacity: .82;
+    line-height: 1.6;
+}
+
+.release-eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    opacity: .65;
+}
+
+.release-current {
+    min-width: 260px;
+    padding: 20px;
+    border-radius: 14px;
+    background:
+        rgba(255,255,255,.10);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.release-current strong {
+    font-size: 25px;
+}
+
+.release-current > span:not(
+    .release-current-label
+) {
+    font-size: 12px;
+    opacity: .78;
+    overflow-wrap: anywhere;
+}
+
+.release-current-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    opacity: .62;
+}
+
+.release-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 18px;
+    margin-top: 7px;
+    border: 0;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #102c50;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.release-submit {
+    width: 100%;
+    background: #102c50;
+    color: #ffffff;
+}
+
+.release-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(280px, .72fr)
+        minmax(0, 1.8fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.release-upload-panel {
+    position: sticky;
+    top: 24px;
+}
+
+.release-upload-panel textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.release-upload-help {
+    margin: -4px 0 7px;
+    font-size: 11px;
+    color: #718093;
+    line-height: 1.45;
+}
+
+.release-public-link {
+    display: flex;
+    gap: 10px;
+}
+
+.release-public-link input {
+    flex: 1;
+    min-width: 0;
+    font-family:
+        Consolas,
+        monospace;
+}
+
+.release-public-link button {
+    border: 0;
+    border-radius: 9px;
+    padding: 0 18px;
+    background: #102c50;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.release-hash-block {
+    margin-top: 15px;
+    padding: 13px 15px;
+    background: #f5f7fa;
+    border-radius: 10px;
+}
+
+.release-hash-block span {
+    display: block;
+    margin-bottom: 7px;
+    color: #718093;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.release-hash-block code {
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+}
+
+.release-table-hash {
+    display: block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.release-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.release-actions form {
+    margin: 0;
+}
+
+.release-action-link,
+.release-publish-button,
+.release-archive-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 31px;
+    padding: 0 9px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.release-action-link {
+    background: #eef3f8;
+    color: #173858;
+}
+
+.release-publish-button {
+    border: 0;
+    background: #173f2c;
+    color: #ffffff;
+}
+
+.release-archive-button {
+    border: 1px solid #d9dee5;
+    background: #ffffff;
+    color: #5d6672;
+}
+
+.release-notes-row td {
+    background: #fafbfc;
+    font-size: 11px;
+    color: #677483;
+}
+
+@media (max-width: 1150px) {
+
+    .release-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .release-upload-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 760px) {
+
+    .release-hero {
+        flex-direction: column;
+    }
+
+    .release-current {
+        min-width: 0;
+    }
+
+    .release-public-link {
+        flex-direction: column;
+    }
+
+    .release-public-link button {
+        min-height: 42px;
+    }
+}
+
+
+
+
+/* PATCH 2E-C PROFESSIONAL AGENT WINDOWS */
+
+/* ---------------------------------------------------------
+   PAGE
+--------------------------------------------------------- */
+
+.release-page {
+    gap: 24px;
+}
+
+.release-page * {
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   HERO
+--------------------------------------------------------- */
+
+.release-hero {
+    padding: 28px 30px;
+    border-radius: 20px;
+    box-shadow:
+        0 16px 42px rgba(15, 35, 60, .13);
+}
+
+.release-hero h2 {
+    font-size: 28px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+}
+
+.release-hero p {
+    font-size: 14px;
+}
+
+.release-current {
+    min-width: 285px;
+    border:
+        1px solid rgba(255,255,255,.10);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+
+/* ---------------------------------------------------------
+   LAYOUT
+--------------------------------------------------------- */
+
+.release-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+}
+
+.release-upload-panel {
+    position: static;
+    width: 100%;
+    padding: 26px 28px;
+    border-radius: 18px;
+    border: 1px solid #e5eaf0;
+    box-shadow:
+        0 8px 28px rgba(20, 40, 70, .06);
+}
+
+.release-upload-panel h3 {
+    margin-top: 0;
+    margin-bottom: 7px;
+    font-size: 20px;
+    color: #12243d;
+}
+
+.release-upload-panel > p {
+    margin-top: 0;
+    margin-bottom: 22px;
+    color: #657387;
+}
+
+
+/* ---------------------------------------------------------
+   FORMULAIRE UPLOAD
+--------------------------------------------------------- */
+
+.release-upload-panel form {
+    display: grid;
+    grid-template-columns:
+        minmax(150px, .55fr)
+        minmax(320px, 1.4fr)
+        minmax(320px, 1.25fr);
+    gap: 18px 22px;
+    align-items: end;
+}
+
+.release-upload-panel label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 800;
+    color: #33445a;
+}
+
+.release-upload-panel input[type="text"],
+.release-upload-panel input[type="file"],
+.release-upload-panel textarea {
+    width: 100%;
+    border: 1px solid #d9e0e8;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #172338;
+    font: inherit;
+    outline: none;
+    transition:
+        border-color .15s ease,
+        box-shadow .15s ease,
+        background .15s ease;
+}
+
+.release-upload-panel input[type="text"] {
+    min-height: 46px;
+    padding: 0 13px;
+}
+
+.release-upload-panel textarea {
+    min-height: 92px;
+    padding: 12px 13px;
+    resize: vertical;
+}
+
+.release-upload-panel input[type="file"] {
+    min-height: 46px;
+    padding: 6px;
+    background: #f8fafc;
+}
+
+.release-upload-panel input[type="file"]::file-selector-button {
+    min-height: 32px;
+    margin-right: 12px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 7px;
+    background: #e8eef6;
+    color: #173858;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.release-upload-panel input[type="file"]::file-selector-button:hover {
+    background: #dce7f3;
+}
+
+.release-upload-panel input[type="text"]:focus,
+.release-upload-panel input[type="file"]:focus,
+.release-upload-panel textarea:focus {
+    border-color: #2b6eb4;
+    box-shadow:
+        0 0 0 3px rgba(43,110,180,.10);
+}
+
+.release-upload-help {
+    grid-column: 1 / -1;
+    margin: -7px 0 0;
+    padding: 10px 13px;
+    border-radius: 9px;
+    background: #f6f8fb;
+    color: #68788d;
+    font-size: 11px;
+}
+
+.release-submit {
+    grid-column: 1 / -1;
+    width: auto;
+    justify-self: start;
+    min-width: 230px;
+    min-height: 46px;
+    padding: 0 24px;
+    margin-top: 2px;
+    border-radius: 10px;
+    background:
+        linear-gradient(
+            135deg,
+            #123a69,
+            #185694
+        );
+    box-shadow:
+        0 7px 18px rgba(18,58,105,.18);
+    transition:
+        transform .12s ease,
+        box-shadow .12s ease;
+}
+
+.release-submit:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 10px 24px rgba(18,58,105,.22);
+}
+
+
+/* ---------------------------------------------------------
+   HISTORIQUE
+--------------------------------------------------------- */
+
+.release-grid > section:not(.release-upload-panel) {
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid #e5eaf0;
+    background: #ffffff;
+    box-shadow:
+        0 8px 28px rgba(20,40,70,.05);
+}
+
+.release-grid > section:not(.release-upload-panel) > h3,
+.release-grid > section:not(.release-upload-panel) > p {
+    margin-left: 24px;
+    margin-right: 24px;
+}
+
+.release-grid > section:not(.release-upload-panel) > h3 {
+    margin-top: 24px;
+    margin-bottom: 7px;
+    font-size: 20px;
+    color: #12243d;
+}
+
+.release-grid > section:not(.release-upload-panel) > p {
+    margin-top: 0;
+    margin-bottom: 22px;
+    color: #657387;
+}
+
+
+/* ---------------------------------------------------------
+   TABLEAU
+--------------------------------------------------------- */
+
+.release-page table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.release-page thead th {
+    padding: 13px 14px;
+    border-top: 1px solid #edf0f4;
+    border-bottom: 1px solid #e5e9ee;
+    background: #f6f8fb;
+    color: #66758a;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.release-page tbody td {
+    padding: 17px 14px;
+    border-bottom: 1px solid #edf0f4;
+    vertical-align: middle;
+    color: #26374d;
+    font-size: 12px;
+}
+
+.release-page tbody tr:hover > td {
+    background: #fbfcfe;
+}
+
+
+/* tailles colonnes */
+
+.release-page th:nth-child(1),
+.release-page td:nth-child(1) {
+    width: 9%;
+}
+
+.release-page th:nth-child(2),
+.release-page td:nth-child(2) {
+    width: 28%;
+}
+
+.release-page th:nth-child(3),
+.release-page td:nth-child(3) {
+    width: 10%;
+}
+
+.release-page th:nth-child(4),
+.release-page td:nth-child(4) {
+    width: 11%;
+}
+
+.release-page th:nth-child(5),
+.release-page td:nth-child(5) {
+    width: 12%;
+}
+
+.release-page th:nth-child(6),
+.release-page td:nth-child(6) {
+    width: 14%;
+}
+
+.release-page th:nth-child(7),
+.release-page td:nth-child(7) {
+    width: 16%;
+}
+
+
+/* filename */
+
+.release-page td:nth-child(2) {
+    overflow-wrap: anywhere;
+}
+
+
+/* statut */
+
+.release-page td:nth-child(4) {
+    font-weight: 800;
+    color: #44566c;
+}
+
+
+/* hash */
+
+.release-table-hash {
+    max-width: 100%;
+    padding: 6px 8px;
+    border-radius: 7px;
+    background: #f5f7fa;
+    color: #536174;
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+    font-size: 10px;
+}
+
+
+/* ---------------------------------------------------------
+   ACTIONS - TOUJOURS VISIBLES
+--------------------------------------------------------- */
+
+.release-actions-heading {
+    min-width: 210px;
+    text-align: right !important;
+}
+
+.release-actions-cell {
+    min-width: 210px;
+}
+
+.release-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.release-actions form {
+    margin: 0;
+}
+
+.release-action-link,
+.release-publish-button,
+.release-archive-button {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    transition:
+        transform .12s ease,
+        box-shadow .12s ease,
+        background .12s ease;
+}
+
+.release-action-link:hover,
+.release-publish-button:hover,
+.release-archive-button:hover {
+    transform: translateY(-1px);
+}
+
+
+/* T?l?charger */
+
+.release-action-link {
+    border: 1px solid #d7e1eb;
+    background: #f7f9fc;
+    color: #24476d;
+}
+
+.release-action-link:hover {
+    background: #edf3f9;
+}
+
+
+/* Publier - action principale */
+
+.release-publish-button {
+    border: 0;
+    background:
+        linear-gradient(
+            135deg,
+            #16704b,
+            #21865d
+        );
+    color: #ffffff;
+    box-shadow:
+        0 4px 10px rgba(22,112,75,.18);
+}
+
+.release-publish-button:hover {
+    box-shadow:
+        0 6px 14px rgba(22,112,75,.24);
+}
+
+
+/* Archiver */
+
+.release-archive-button {
+    border: 1px solid #e0d8d8;
+    background: #ffffff;
+    color: #8a4d4d;
+}
+
+.release-archive-button:hover {
+    background: #fff7f7;
+}
+
+
+/* ---------------------------------------------------------
+   NOTES VERSION
+--------------------------------------------------------- */
+
+.release-notes-row td {
+    position: static !important;
+    width: auto !important;
+    padding: 11px 14px 14px !important;
+    background: #fafbfd !important;
+    color: #68778a !important;
+    font-size: 11px !important;
+}
+
+
+/* ---------------------------------------------------------
+   EMPTY STATE
+--------------------------------------------------------- */
+
+.release-page .empty-state {
+    margin: 20px 24px 26px;
+    padding: 42px 20px;
+    border: 1px dashed #d8e0e9;
+    border-radius: 12px;
+    background: #fafbfd;
+    text-align: center;
+    color: #7a8797;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+--------------------------------------------------------- */
+
+@media (max-width: 1250px) {
+
+    .release-upload-panel form {
+        grid-template-columns:
+            minmax(150px, .6fr)
+            minmax(300px, 1.4fr);
+    }
+
+    .release-upload-panel form > *:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+
+    .release-page table {
+        min-width: 1050px;
+    }
+
+    .release-grid > section:not(.release-upload-panel) {
+        overflow-x: auto;
+    }
+}
+
+
+@media (max-width: 760px) {
+
+    .release-hero {
+        padding: 22px;
+    }
+
+    .release-upload-panel {
+        padding: 20px;
+    }
+
+    .release-upload-panel form {
+        grid-template-columns: 1fr;
+    }
+
+    .release-upload-panel form > *,
+    .release-upload-help,
+    .release-submit {
+        grid-column: 1 !important;
+    }
+
+    .release-submit {
+        width: 100%;
+    }
+}
+
+
+
+
+/* PATCH 2E-E ADMIN PUBLIC LINKS */
+
+.release-public-panel {
+    padding: 25px 28px;
+}
+
+.release-public-panel .panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.release-public-panel .panel-header h3 {
+    margin: 0 0 6px;
+    color: #12243d;
+}
+
+.release-public-panel .panel-header p {
+    margin: 0;
+    color: #68788d;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.release-public-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 27px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #eaf5ff;
+    color: #1767a7;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.release-link-group > label {
+    display: block;
+    margin-bottom: 8px;
+    color: #394b61;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.release-public-link {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        auto;
+    gap: 9px;
+    align-items: stretch;
+}
+
+.release-public-link input {
+    width: 100%;
+    min-width: 0;
+    min-height: 41px;
+    padding: 0 12px;
+    border: 1px solid #d9e1e9;
+    border-radius: 9px;
+    background: #f9fbfd;
+    color: #273a50;
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+    font-size: 11px;
+}
+
+.release-public-link button,
+.release-open-public {
+    min-height: 41px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 17px;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.release-public-link button {
+    border: 0;
+    background: #123a69;
+    color: #ffffff;
+}
+
+.release-open-public {
+    border: 1px solid #cddceb;
+    background: #edf5fd;
+    color: #175d9f;
+}
+
+.release-public-link button:hover {
+    background: #0d315b;
+}
+
+.release-open-public:hover {
+    background: #e2eef9;
+}
+
+.release-direct-download {
+    margin-top: 19px;
+    padding: 15px;
+    border: 1px solid #e5eaf0;
+    border-radius: 11px;
+    background: #fafbfd;
+}
+
+.release-direct-download-title {
+    margin-bottom: 4px;
+    color: #43556b;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.release-direct-download p {
+    margin: 0 0 10px;
+    color: #7a8797;
+    font-size: 10px;
+}
+
+.release-direct-link {
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+}
+
+.release-hash-block {
+    margin-top: 18px;
+}
+
+.release-hash-block span {
+    letter-spacing: .04em;
+}
+
+@media (max-width: 760px) {
+
+    .release-public-panel {
+        padding: 20px;
+    }
+
+    .release-public-panel .panel-header {
+        flex-direction: column;
+    }
+
+    .release-public-link {
+        grid-template-columns: 1fr;
+    }
+
+    .release-public-link button,
+    .release-open-public {
+        width: 100%;
+    }
+}
+
+
+
+/* Agent Windows : formulaire clair, historique équilibré et responsive */
+.release-page { gap: 18px; width: 100%; max-width: 1550px; margin: 0 auto; }
+.release-hero { align-items: center; padding: 25px 28px; border: 1px solid #193d65; border-radius: 15px; background: linear-gradient(112deg,#102b4b,#1d5288); box-shadow: 0 8px 22px rgba(15,35,60,.10); }
+.release-hero-copy { max-width: 650px; }
+.release-hero h2 { font-size: clamp(23px,2.4vw,29px); letter-spacing: -.025em; }
+.release-hero p { color: #e1ebf7; font-size: 12px; }
+.release-eyebrow { color: #c6d9ef; font-size: 9px; letter-spacing: .12em; }
+.release-current { min-width: 230px; padding: 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(255,255,255,.08); }
+.release-current strong { font-size: 21px; }
+.release-current .release-primary-button { min-height: 36px; margin-top: 2px; padding: 0 12px; border-radius: 7px; font-size: 11px; }
+.release-grid { display: grid; grid-template-columns: minmax(330px,.82fr) minmax(0,1.7fr); align-items: start; gap: 18px; }
+.release-upload-panel, .release-history-panel { position: static; min-width: 0; overflow: hidden; border: 1px solid #dce3ec; border-radius: 14px; background: #fff; box-shadow: 0 4px 14px rgba(25,42,65,.04); }
+.release-upload-panel { width: auto; padding: 0; }
+.release-panel-heading, .release-history-heading { display: flex; align-items: center; gap: 11px; padding: 17px 18px; border-bottom: 1px solid #e8edf3; background: linear-gradient(180deg,#fff,#fbfcfe); }
+.release-panel-icon { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; border: 1px solid #d9e3ef; border-radius: 10px; background: #f0f4f9; color: #426a94; }
+.release-panel-icon svg, .release-submit svg, .release-empty-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.release-panel-eyebrow { display: block; color: #5b718b; font-size: 8px; font-weight: 800; letter-spacing: .1em; }
+.release-panel-heading h3, .release-history-heading h3 { margin: 4px 0 3px; color: #1b2c42; font-size: 14px; font-weight: 700; }
+.release-panel-heading p, .release-history-heading p { margin: 0; color: #617188; font-size: 10px; line-height: 1.45; }
+.release-upload-form { display: grid; grid-template-columns: minmax(0,1fr); gap: 13px; padding: 17px 18px 19px; }
+.release-upload-panel form .release-field { display: grid; gap: 6px; min-width: 0; }
+.release-upload-panel form .release-field label { display: flex; align-items: center; justify-content: space-between; margin: 0; color: #2d3d52; font-size: 11px; font-weight: 750; }
+.release-notes-field label span { color: #758398; font-size: 9px; font-weight: 500; }
+.release-upload-panel input[type="text"], .release-upload-panel input[type="file"], .release-upload-panel textarea { min-width: 0; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #1d2d42; font-size: 12px; }
+.release-upload-panel input[type="text"] { min-height: 41px; padding: 0 11px; }
+.release-upload-panel input[type="file"] { min-height: 43px; padding: 5px; background: #f8fafc; }
+.release-upload-panel input[type="file"]::file-selector-button { min-height: 30px; margin-right: 8px; padding: 0 10px; border-radius: 6px; background: #e9eff6; color: #284d74; font-size: 10px; }
+.release-upload-panel textarea { min-height: 86px; padding: 10px 11px; resize: vertical; font-size: 11px; line-height: 1.5; }
+.release-upload-panel input[type="text"]:focus, .release-upload-panel input[type="file"]:focus, .release-upload-panel textarea:focus { border-color: #4776ad; box-shadow: 0 0 0 3px rgba(36,91,158,.12); }
+.release-upload-help { display: flex; align-items: flex-start; gap: 7px; margin: 0; padding: 9px 10px; border: 1px solid #e6ebf1; border-radius: 8px; background: #f7f9fb; color: #586a80; font-size: 9px; line-height: 1.5; }
+.release-upload-help span { color: #557698; font-weight: 800; }
+.release-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-width: 0; min-height: 42px; margin: 0; padding: 0 14px; border-radius: 8px; background: #245b9e; box-shadow: 0 3px 8px rgba(36,91,158,.14); font-size: 11px; transition: background .16s ease, transform .16s ease; }
+.release-submit:hover { transform: translateY(-1px); background: #1b477d; }
+.release-submit svg { width: 16px; height: 16px; }
+.release-history-panel { padding: 0; }
+.release-history-heading { justify-content: space-between; padding: 17px 19px; }
+.release-history-heading > div { min-width: 0; }
+.release-history-count { flex: 0 0 auto; padding: 6px 9px; border: 1px solid #dce3ec; border-radius: 99px; background: #f5f7fa; color: #4f6075; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.release-table-wrap { width: 100%; overflow-x: auto; }
+.release-table { width: 100%; min-width: 900px; table-layout: auto !important; border-collapse: collapse !important; }
+.release-page .release-table th { padding: 11px 10px; color: #53647a; font-size: 8px; letter-spacing: .05em; white-space: nowrap; }
+.release-page .release-table td { padding: 12px 10px; color: #34465c; font-size: 10px; }
+.release-page .release-table th:nth-child(1), .release-page .release-table td:nth-child(1) { width: 9%; }
+.release-page .release-table th:nth-child(2), .release-page .release-table td:nth-child(2) { width: 20%; }
+.release-page .release-table th:nth-child(3), .release-page .release-table td:nth-child(3) { width: 8%; }
+.release-page .release-table th:nth-child(4), .release-page .release-table td:nth-child(4) { width: 11%; }
+.release-page .release-table th:nth-child(5), .release-page .release-table td:nth-child(5) { width: 13%; }
+.release-page .release-table th:nth-child(6), .release-page .release-table td:nth-child(6) { width: 16%; }
+.release-page .release-table th:nth-child(7), .release-page .release-table td:nth-child(7) { width: 23%; }
+.release-version-value { color: #20354e; font-size: 10px; }
+.release-filename { display: block; overflow-wrap: anywhere; color: #42546a; }
+.release-page .release-table-hash { display: block; max-width: 145px; overflow: hidden; color: #53647a; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.release-actions-heading { min-width: 0; text-align: left !important; }
+.release-actions-cell { min-width: 0; }
+.release-actions { justify-content: flex-start; gap: 5px; }
+.release-action-link, .release-publish-button, .release-archive-button { min-height: 29px; padding: 0 8px; font-size: 9px; }
+.release-action-link { border: 1px solid #d7e1eb; background: #f7f9fc; color: #24476d; }
+.release-publish-button { background: #286243; }
+.release-publish-button:hover { background: #204f36; }
+.release-archive-button { border-color: #e2c4c1; color: #8f3933; }
+.release-archive-button:hover { background: #fbf2f1; }
+.release-notes-row td { background: #f8fafc !important; color: #53647a !important; font-size: 10px !important; }
+.release-notes-row td strong { margin-right: 7px; color: #33465c; }
+.release-empty-state { display: grid; justify-items: center; padding: 38px 20px 42px; text-align: center; }
+.release-empty-icon { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid #dfe7f0; border-radius: 12px; background: #f2f5f9; color: #536d88; }
+.release-empty-state h4 { margin: 11px 0 4px; color: #293a50; font-size: 12px; }
+.release-empty-state p { max-width: 340px; margin: 0; color: #64748a; font-size: 10px; line-height: 1.5; }
+@media (max-width: 1250px) { .release-grid { grid-template-columns: minmax(0,1fr); } .release-upload-panel { position: static; } .release-upload-form { grid-template-columns: repeat(2,minmax(0,1fr)); } .release-notes-field, .release-upload-help, .release-submit { grid-column: 1 / -1; } }
+@media (max-width: 760px) {
+    .release-page { gap: 15px; }
+    .release-hero { align-items: flex-start; flex-direction: column; gap: 16px; padding: 20px; border-radius: 13px; }
+    .release-hero h2 { font-size: 22px; }
+    .release-current { width: 100%; min-width: 0; }
+    .release-upload-panel { padding: 0; }
+    .release-upload-form { grid-template-columns: 1fr; gap: 12px; padding: 15px; }
+    .release-notes-field, .release-upload-help, .release-submit { grid-column: auto; }
+    .release-history-heading { align-items: flex-start; padding: 15px; }
+    .release-table-wrap { overflow: visible; }
+    .release-table { display: block; min-width: 0; }
+    .release-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .release-table tbody { display: grid; gap: 10px; padding: 11px; }
+    .release-table tbody tr:not(.release-notes-row) { display: block; padding: 4px 11px; border: 1px solid #e4eaf1; border-radius: 10px; background: #fff; }
+    .release-page .release-table tbody td { display: grid; grid-template-columns: 82px minmax(0,1fr); align-items: center; gap: 8px; width: auto !important; min-width: 0; padding: 8px 0; border: 0; border-top: 1px solid #eff2f6; font-size: 10px; white-space: normal; overflow-wrap: anywhere; }
+    .release-page .release-table tbody tr:not(.release-notes-row) td:first-child { border-top: 0; }
+    .release-table tbody td[data-label]::before { content: attr(data-label); color: #65748a; font-size: 8px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .release-page .release-table-hash { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+    .release-actions { justify-content: flex-start; }
+    .release-notes-row { display: block; padding: 8px 11px; border: 1px solid #e4eaf1; border-radius: 10px; background: #f8fafc; }
+    .release-page .release-table .release-notes-row td { display: block; padding: 8px 0; border: 0; }
+    .release-notes-row td::before { display: block; margin-bottom: 5px; }
+}
+@media (max-width: 420px) { .release-history-count { font-size: 8px; } .release-action-link, .release-publish-button, .release-archive-button { min-height: 31px; } }
+
+/* Keep upload fields inside their card even when the admin shell narrows the content area. */
+.release-upload-panel .release-upload-form { grid-template-columns: minmax(0,1fr); }
+.release-upload-panel .release-upload-form > *,
+.release-upload-panel .release-upload-form .release-field,
+.release-upload-panel .release-upload-form input,
+.release-upload-panel .release-upload-form textarea { box-sizing: border-box; width: 100%; min-width: 0; }
+.release-upload-panel .release-upload-form .release-upload-help,
+.release-upload-panel .release-upload-form .release-notes-field,
+.release-upload-panel .release-upload-form .release-submit { grid-column: 1 / -1; }
+.release-upload-panel .release-upload-form .release-submit { color: #fff; }
+.release-upload-panel .release-upload-form input[type="file"] { overflow: hidden; }

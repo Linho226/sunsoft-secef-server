@@ -1,0 +1,68 @@
+
+/* Page Sites : cohérence avec la fiche client et adaptation mobile */
+.sites-page { display: grid; gap: 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
+.sites-intro { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 4px 1px 2px; }
+.sites-eyebrow { display: block; color: #5b718b; font-size: 9px; font-weight: 800; letter-spacing: .11em; }
+.sites-intro h2 { margin: 5px 0 4px; color: #17263b; font-size: 23px; font-weight: 720; letter-spacing: -.025em; }
+.sites-intro p { margin: 0; color: #5e6d81; font-size: 13px; line-height: 1.5; }
+.sites-total { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #dce3ec; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(25,42,65,.03); }
+.sites-total-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: #f0f5f1; color: #527660; }
+.sites-total-icon svg, .sites-heading-icon svg, .sites-submit svg, .sites-empty-icon svg, .site-row-mark svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sites-total strong, .sites-total small { display: block; }
+.sites-total strong { color: #1d3048; font-size: 16px; line-height: 1.1; }
+.sites-total small { margin-top: 3px; color: #64748a; font-size: 10px; }
+.sites-content-grid { grid-template-columns: minmax(300px, 370px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sites-create-card, .sites-list-card { position: static; min-width: 0; border-color: #dce3ec; border-radius: 14px; box-shadow: 0 4px 14px rgba(25,42,65,.04); }
+.sites-heading-icon { background: #f0f5f1; border-color: #dce8df; color: #527660; }
+.sites-heading-icon.is-list { background: #f1f4f8; border-color: #e1e7ee; color: #536e8c; }
+.sites-form { padding: 20px; }
+.sites-form .form-field { margin-bottom: 14px; }
+.sites-form .form-field label { display: block; margin-bottom: 7px; color: #27384d; font-size: 12px; font-weight: 700; }
+.sites-form .form-field input, .sites-form .form-field select { display: block; width: 100%; min-height: 45px; padding: 0 12px; border: 1px solid #c9d3df; border-radius: 8px; outline: none; background: #fff; color: #1f2e42; font: inherit; font-size: 13px; transition: border-color .16s ease, box-shadow .16s ease; }
+.sites-form .form-field input::placeholder { color: #8793a3; }
+.sites-form .form-field input:focus, .sites-form .form-field select:focus { border-color: #4776ad; box-shadow: 0 0 0 3px rgba(36,91,158,.13); }
+.sites-form .form-field small { display: block; margin-top: 6px; color: #65748a; font-size: 10px; line-height: 1.45; }
+.sites-submit { width: 100%; }
+.sites-form .alert-error, .sites-form .alert-success { margin-bottom: 14px; }
+.sites-no-client { padding: 15px; border: 1px solid #eadcc6; border-radius: 10px; background: #fcf8f1; color: #614a2b; }
+.sites-no-client strong { font-size: 12px; }
+.sites-no-client p { margin: 6px 0 11px; color: #715f45; font-size: 11px; line-height: 1.5; }
+.sites-no-client a { display: inline-flex; align-items: center; gap: 6px; color: #315f96; font-size: 11px; font-weight: 750; }
+.sites-count-badge { margin-left: auto; padding: 6px 9px; border: 1px solid #dce3ec; border-radius: 99px; background: #f5f7fa; color: #4f6075; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.sites-table { min-width: 760px; }
+.sites-table th { padding: 12px 14px; background: #f5f7fa; color: #52647a; font-size: 9px; letter-spacing: .07em; }
+.sites-table td { padding: 14px; border-top-color: #edf1f5; color: #26364b; font-size: 11px; }
+.sites-table tbody tr { transition: background .14s ease; }
+.sites-table tbody tr:hover { background: #f8fafc; }
+.site-name-cell { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+.site-name-cell strong { color: #203149; font-size: 11px; }
+.site-row-mark { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border: 1px solid #e0e8e1; border-radius: 8px; background: #f2f6f2; color: #55745f; }
+.site-row-mark svg { width: 16px; height: 16px; }
+.site-code-badge { display: inline-block; padding: 5px 7px; border: 1px solid #e0e7ef; border-radius: 6px; background: #f4f6f9; color: #45566c; font: 700 10px ui-monospace, Consolas, monospace; }
+.site-uid { color: #53647a !important; font-size: 10px !important; }
+.sites-table .status-badge.active { padding: 5px 8px; background: #eaf3ed; color: #286243; font-size: 10px; }
+.sites-empty-state { display: grid; justify-items: center; padding: 40px 20px 44px; text-align: center; }
+.sites-empty-icon { display: grid; width: 46px; height: 46px; place-items: center; border: 1px solid #e0e8e1; border-radius: 13px; background: #f2f6f2; color: #55745f; }
+.sites-empty-state h4 { margin: 12px 0 4px; color: #293a50; font-size: 13px; }
+.sites-empty-state p { max-width: 340px; margin: 0; color: #65748a; font-size: 11px; line-height: 1.5; }
+@media (max-width: 1100px) { .sites-content-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .sites-page { gap: 15px; } .sites-intro { align-items: flex-start; } .sites-intro h2 { font-size: 21px; } .sites-total { padding: 8px 10px; } .sites-content-grid { gap: 14px; } }
+@media (max-width: 560px) {
+    .sites-intro { flex-direction: column; gap: 12px; }
+    .sites-total { width: 100%; }
+    .sites-total small { font-size: 11px; }
+    .sites-form { padding: 18px 16px 16px; }
+    .sites-list-heading { flex-wrap: wrap; }
+    .sites-count-badge { margin-left: 50px; }
+    .sites-table-wrapper { overflow: visible; }
+    .sites-table { display: block; min-width: 0; }
+    .sites-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .sites-table tbody { display: grid; gap: 10px; padding: 12px; }
+    .sites-table tbody tr { display: block; padding: 4px 12px; border: 1px solid #e4eaf1; border-radius: 10px; background: #fff; }
+    .sites-table td { display: grid; grid-template-columns: 82px minmax(0,1fr); align-items: center; gap: 8px; padding: 9px 0; border-top: 1px solid #eff2f6; white-space: normal; overflow-wrap: anywhere; }
+    .sites-table td:first-child { border-top: 0; }
+    .sites-table td::before { content: attr(data-label); color: #65748a; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .site-name-cell { min-width: 0; }
+    .site-name-cell strong { overflow-wrap: anywhere; }
+    .site-uid { font-size: 10px !important; }
+}

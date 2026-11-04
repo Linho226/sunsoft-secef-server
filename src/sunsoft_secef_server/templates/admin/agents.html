@@ -1,264 +1,102 @@
-﻿{% extends "admin/base.html" %}
+{% extends "admin/base.html" %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/agents.css') }}?v=20261002-2">
+{% endblock %}
 
 {% block content %}
-
 <div class="agents-v1-page">
-
     <section class="agents-v1-header">
-
-        <div>
-            <div class="agents-v1-eyebrow">
-                SUPERVISION AGENTS — V1
-            </div>
-
-            <h1>
-                Agents Windows
-            </h1>
-
-            <p>
-                Suivi des installations Sunsoft SECeF
-                provisionnées sur les postes clients.
-            </p>
+        <div class="agents-header-copy">
+            <div class="agents-v1-eyebrow">SUPERVISION DES AGENTS</div>
+            <h2>Agents Windows</h2>
+            <p>Suivez l’état des installations Sunsoft SECeF déployées chez vos clients.</p>
         </div>
-
         {% if current_version %}
         <div class="agents-v1-target">
-            <span>
-                VERSION PUBLIÉE
-            </span>
-
-            <strong>
-                {{ current_version }}
-            </strong>
+            <span>VERSION PUBLIÉE</span>
+            <strong>{{ current_version }}</strong>
         </div>
         {% endif %}
-
     </section>
 
-
-    <section class="agents-v1-coming">
-
-        <div class="agents-v1-coming-icon">
-            i
+    <section class="agents-v1-coming" aria-label="Informations sur la supervision">
+        <div class="agents-v1-coming-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>
         </div>
-
         <div>
-            <strong>
-                Fonctionnalités complémentaires à venir
-            </strong>
-
-            <p>
-                Le nom du poste et certaines informations
-                système seront remontés par une prochaine
-                version de l'Agent Windows.
-            </p>
+            <strong>Informations système en cours d’évolution</strong>
+            <p>Le nom du poste et certains détails système seront disponibles dans une prochaine version de l’Agent Windows.</p>
         </div>
-
     </section>
 
-
-    <section class="agents-v1-stats">
-
-        <article>
-            <span>
-                AGENTS
-            </span>
-            <strong>
-                {{ agent_count }}
-            </strong>
+    {% set online_rate = ((online_count * 100 / agent_count)|round|int) if agent_count else 0 %}
+    <section class="agents-v1-stats" aria-label="Indicateurs des agents">
+        <article class="agent-stat-total">
+            <span class="agent-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
+            <div><span class="agent-stat-label">AGENTS ENREGISTRÉS</span><strong>{{ agent_count }}</strong><small>Installations connues</small></div>
         </article>
-
-        <article>
-            <span>
-                EN LIGNE
-            </span>
-            <strong class="agents-number-online">
-                {{ online_count }}
-            </strong>
+        <article class="agent-stat-online">
+            <span class="agent-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7.5"/><circle cx="12" cy="12" r="9"/></svg></span>
+            <div><span class="agent-stat-label">EN LIGNE</span><strong>{{ online_count }}</strong><small>{{ online_rate }} % des agents</small></div>
         </article>
-
-        <article>
-            <span>
-                HORS LIGNE
-            </span>
-            <strong>
-                {{ offline_count }}
-            </strong>
+        <article class="agent-stat-offline">
+            <span class="agent-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span>
+            <div><span class="agent-stat-label">HORS LIGNE</span><strong>{{ offline_count }}</strong><small>Sans signal récent</small></div>
         </article>
-
-        <article>
-            <span>
-                DÉLAI DE SUPERVISION
-            </span>
-            <strong>
-                {{ heartbeat_timeout_seconds }} s
-            </strong>
+        <article class="agent-stat-timeout">
+            <span class="agent-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <div><span class="agent-stat-label">DÉLAI DE SUPERVISION</span><strong>{{ heartbeat_timeout_seconds }} <small>s</small></strong><small>Seuil avant statut hors ligne</small></div>
         </article>
-
     </section>
 
-
-    <section class="agents-v1-panel">
-
+    <section class="agents-v1-panel" aria-labelledby="agents-list-title">
         <div class="agents-v1-panel-header">
-
             <div>
-                <h2>
-                    Parc d'Agents
-                </h2>
-
-                <p>
-                    État actuel des installations
-                    enregistrées sur le serveur central.
-                </p>
+                <span class="agents-panel-eyebrow">PARC INFORMATIQUE</span>
+                <h2 id="agents-list-title">Installations enregistrées</h2>
+                <p>État de connexion, version et activité récente.</p>
             </div>
-
+            <span class="agents-total-badge">{{ rows|length }} agent(s)</span>
         </div>
-
 
         {% if rows %}
-
         <div class="agents-v1-table-wrap">
-
             <table class="agents-v1-table">
-
                 <thead>
-                    <tr>
-                        <th>Poste</th>
-                        <th>Client</th>
-                        <th>Site</th>
-                        <th>Agent UID</th>
-                        <th>Version</th>
-                        <th>Statut</th>
-                        <th>Dernière connexion</th>
-                        <th>Activation</th>
-                        <th>Mise à jour</th>
-                        <th></th>
-                    </tr>
+                    <tr><th scope="col">Poste</th><th scope="col">Client</th><th scope="col">Site</th><th scope="col">UID agent</th><th scope="col">Version</th><th scope="col">Statut</th><th scope="col">Dernière connexion</th><th scope="col">Activation</th><th scope="col">Mise à jour</th><th scope="col">Détail</th></tr>
                 </thead>
-
                 <tbody>
-
-                {% for row in rows %}
-
+                    {% for row in rows %}
                     <tr>
-
-                        <td>
-                            <span class="agents-coming-badge">
-                                À venir
-                            </span>
-                        </td>
-
-                        <td>
-                            <strong>
-                                {{ row.tenant_name }}
-                            </strong>
-                        </td>
-
-                        <td>
-                            {{ row.site_name }}
-                        </td>
-
-                        <td>
-                            <code
-                                class="agents-v1-uid"
-                                title="{{ row.agent_uid }}"
-                            >
-                                {{ row.agent_uid }}
-                            </code>
-                        </td>
-
-                        <td>
-                            <span class="agents-version-badge">
-                                {{ row.version }}
-                            </span>
-                        </td>
-
-                        <td>
-
+                        <td data-label="Poste"><span class="agents-coming-badge">À venir</span></td>
+                        <td data-label="Client"><strong>{{ row.tenant_name }}</strong></td>
+                        <td data-label="Site">{{ row.site_name }}</td>
+                        <td data-label="UID agent"><code class="agents-v1-uid" title="{{ row.agent_uid }}">{{ row.agent_uid }}</code></td>
+                        <td data-label="Version"><span class="agents-version-badge">{{ row.version }}</span></td>
+                        <td data-label="Statut">
                             {% if row.online %}
-
-                            <span class="agents-status online">
-                                <i></i>
-                                En ligne
-                            </span>
-
+                            <span class="agents-status online"><i aria-hidden="true"></i> En ligne</span>
                             {% else %}
-
-                            <span class="agents-status offline">
-                                <i></i>
-                                Hors ligne
-                            </span>
-
+                            <span class="agents-status offline"><i aria-hidden="true"></i> Hors ligne</span>
                             {% endif %}
-
                         </td>
-
-                        <td>
-                            {{ row.last_seen }}
-                        </td>
-
-                        <td>
-                            {{ row.created_at }}
-                        </td>
-
-                        <td>
-
-                            <span
-                                class="
-                                    agents-update
-                                    {{ row.update_class }}
-                                "
-                            >
-                                {{ row.update_label }}
-                            </span>
-
-                        </td>
-
-                        <td class="agents-v1-action">
-
-                            <a
-                                href="{{ row.detail_url }}"
-                                class="agents-view-button"
-                            >
-                                Voir
-                            </a>
-
-                        </td>
-
+                        <td data-label="Dernière connexion">{{ row.last_seen }}</td>
+                        <td data-label="Activation">{{ row.created_at }}</td>
+                        <td data-label="Mise à jour"><span class="agents-update {{ row.update_class }}">{{ row.update_label }}</span></td>
+                        <td class="agents-v1-action" data-label="Détail"><a href="{{ row.detail_url }}" class="agents-view-button">Voir le détail <span aria-hidden="true">→</span></a></td>
                     </tr>
-
-                {% endfor %}
-
+                    {% endfor %}
                 </tbody>
-
             </table>
-
         </div>
-
         {% else %}
-
         <div class="agents-v1-empty">
-
-            <div class="agents-v1-empty-icon">
-                ◌
-            </div>
-
-            <h3>
-                Aucun Agent provisionné
-            </h3>
-
-            <p>
-                Un Agent apparaîtra ici après
-                l'activation d'une installation Windows.
-            </p>
-
+            <div class="agents-v1-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4M8 9h8"/></svg></div>
+            <h3>Aucun agent provisionné</h3>
+            <p>Les installations apparaîtront ici après leur première activation et connexion.</p>
         </div>
-
         {% endif %}
-
     </section>
-
 </div>
-
 {% endblock %}

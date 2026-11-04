@@ -492,7 +492,7 @@ def test_admin_can_generate_activation(
         assert generated.status_code == 200
 
         assert (
-            "Code g&eacute;n&eacute;r&eacute; avec succ&egrave;s"
+            "Code créé"
             in generated.text
         )
 
@@ -865,41 +865,59 @@ def test_admin_odoo_token_lifecycle(tmp_path):
             tenant_uid = tenant.tenant_uid
 
         rejected = client.post(
-            "/admin/clients/odoo-credentials",
+            "/admin/odoo/credentials",
             data={"tenant_uid": tenant_uid, "csrf_token": "invalid"},
         )
         assert rejected.status_code == 403
 
         created = client.post(
-            "/admin/clients/odoo-credentials",
+            "/admin/odoo/credentials",
             data={"tenant_uid": tenant_uid, "csrf_token": csrf},
         )
         assert created.status_code == 200
         assert created.headers["cache-control"].startswith("no-store")
-        assert "Copiez ce token maintenant" in created.text
+        assert "Copiez et conservez ce token" in created.text
 
         match = re.search(
-            r'<p class="mono">([^<]+)</p>',
+            r'<code id="generated-odoo-token"[^>]*>([^<]+)</code>',
             created.text,
         )
         assert match is not None
         token = match.group(1).strip()
 
+        heartbeat = client.post(
+            "/api/v1/odoo/heartbeat",
+            headers={
+                "Authorization": (
+                    "Bearer "
+                    f"{token}"
+                ),
+            },
+        )
+        assert heartbeat.status_code == 200
+
+        credential_uid = heartbeat.json()[
+            "credential_uid"
+        ]
+
         with app.state.database.session() as session:
             credential = OdooCredentialRepository(
                 session
-            ).authenticate(token)
+            ).get_by_uid(
+                credential_uid
+            )
             assert credential is not None
             assert credential.tenant_id == tenant.id
-            credential_uid = credential.credential_uid
+            assert credential.last_used_at is not None
 
-        refreshed = client.get("/admin/clients")
+        refreshed = client.get("/admin/odoo")
         assert refreshed.status_code == 200
         assert token not in refreshed.text
         assert credential_uid in refreshed.text
+        assert "En ligne" in refreshed.text
 
         revoked = client.post(
-            f"/admin/clients/odoo-credentials/{credential_uid}/revoke",
+            f"/admin/odoo/credentials/{credential_uid}/revoke",
             data={"csrf_token": _csrf(refreshed.text)},
         )
         assert revoked.status_code == 303

@@ -417,3 +417,57 @@ def test_revoked_odoo_token_returns_401(
         )
 
         assert response.status_code == 401
+
+def test_odoo_heartbeat_updates_last_used_at(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    with TestClient(app) as client:
+        credentials = (
+            _provision_credentials(
+                app
+            )
+        )
+
+        response = client.post(
+            "/api/v1/odoo/heartbeat",
+            headers={
+                "Authorization": (
+                    "Bearer "
+                    f"{credentials['odoo_token']}"
+                ),
+            },
+        )
+
+        assert response.status_code == 200
+
+        body = response.json()
+
+        assert body["status"] == "ok"
+
+        assert (
+            body["credential_uid"]
+            == credentials[
+                "odoo_credential_uid"
+            ]
+        )
+
+        with (
+            app.state.database.session()
+            as session
+        ):
+            credential = (
+                OdooCredentialRepository(
+                    session
+                ).get_by_uid(
+                    credentials[
+                        "odoo_credential_uid"
+                    ]
+                )
+            )
+
+            assert credential is not None
+            assert credential.last_used_at is not None

@@ -1,171 +1,85 @@
 {% extends "admin/base.html" %}
 
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/dashboard.css') }}?v=20261002-2">
+{% endblock %}
+
 {% block content %}
-
-<div class="welcome-card">
-    <div>
-        <div class="eyebrow">
-            SUNSOFT SECeF CENTRAL
+<div class="dashboard-page">
+    <section class="dashboard-hero">
+        <div class="dashboard-hero-copy">
+            <span class="dashboard-kicker">SUNSOFT SECeF · PLATEFORME CENTRALE</span>
+            <h2>Vue d’ensemble</h2>
+            <p>Suivez vos clients, vos sites, les agents Windows et les opérations d’activation depuis un seul endroit.</p>
         </div>
-
-        <h2>
-            Vue d'ensemble de la plateforme
-        </h2>
-
-        <p>
-            Suivez vos clients, leurs sites,
-            leurs Agents Windows et les
-            opérations d'activation.
-        </p>
-    </div>
-
-    <div class="health-pill">
-        <span></span>
-        Serveur opérationnel
-    </div>
-</div>
-
-
-<div class="metric-grid">
-
-    <a
-        class="metric-card"
-        href="{{ request.url_for('admin-clients') }}"
-    >
-        <span>Clients</span>
-        <strong>{{ counts.clients }}</strong>
-        <small>Entreprises enregistrées</small>
-    </a>
-
-    <a
-        class="metric-card"
-        href="{{ request.url_for('admin-sites') }}"
-    >
-        <span>Sites</span>
-        <strong>{{ counts.sites }}</strong>
-        <small>Implantations clients</small>
-    </a>
-
-    <a
-        class="metric-card"
-        href="{{ request.url_for('admin-agents') }}"
-    >
-        <span>Agents</span>
-        <strong>{{ counts.agents }}</strong>
-        <small>Postes provisionnés</small>
-    </a>
-
-    <a
-        class="metric-card"
-        href="{{ request.url_for('admin-activations') }}"
-    >
-        <span>Activations</span>
-        <strong>{{ counts.activations }}</strong>
-        <small>Codes générés</small>
-    </a>
-
-</div>
-
-
-<div class="two-columns">
-
-    <section class="panel">
-
-        <div class="panel-heading">
-            <div>
-                <h3>Agents récents</h3>
-                <p>
-                    Derniers Agents connus du serveur.
-                </p>
-            </div>
-        </div>
-
-        {% if recent_agents %}
-
-        <div class="simple-list">
-
-            {% for agent in recent_agents %}
-
-            <div class="simple-row">
-
-                <div>
-                    <strong>{{ agent.uid }}</strong>
-                    <span>
-                        {{ agent.environment }}
-                        · {{ agent.version }}
-                    </span>
-                </div>
-
-                <small>
-                    {{ agent.last_seen }}
-                </small>
-
-            </div>
-
-            {% endfor %}
-
-        </div>
-
-        {% else %}
-
-        <div class="empty-state">
-            Aucun Agent provisionné.
-        </div>
-
-        {% endif %}
-
+        <div class="dashboard-health"><span aria-hidden="true"></span><div><strong>Service opérationnel</strong><small>Administration centralisée</small></div></div>
     </section>
 
-
-    <section class="panel">
-
-        <div class="panel-heading">
-            <div>
-                <h3>Activations récentes</h3>
-                <p>
-                    Derniers codes créés.
-                </p>
-            </div>
-        </div>
-
-        {% if recent_activations %}
-
-        <div class="simple-list">
-
-            {% for activation in recent_activations %}
-
-            <div class="simple-row">
-
-                <div>
-                    <strong>
-                        {{ activation.uid }}
-                    </strong>
-
-                    <span>
-                        {{ activation.status }}
-                    </span>
-                </div>
-
-                <small>
-                    {{ activation.expires_at }}
-                </small>
-
-            </div>
-
-            {% endfor %}
-
-        </div>
-
-        {% else %}
-
-        <div class="empty-state">
-            Aucun code d'activation.
-        </div>
-
-        {% endif %}
-
+    <section class="dashboard-metrics" aria-label="Indicateurs de la plateforme">
+        <a class="dashboard-metric metric-clients" href="{{ request.url_for('admin-clients') }}">
+            <span class="metric-icon" aria-hidden="true">C</span><span class="metric-label">Clients</span>
+            <strong>{{ counts.clients }}</strong><small>Entreprises enregistrées</small><span class="metric-link">Voir les clients <b aria-hidden="true">→</b></span>
+        </a>
+        <a class="dashboard-metric metric-sites" href="{{ request.url_for('admin-sites') }}">
+            <span class="metric-icon" aria-hidden="true">S</span><span class="metric-label">Sites</span>
+            <strong>{{ counts.sites }}</strong><small>Implantations clientes</small><span class="metric-link">Voir les sites <b aria-hidden="true">→</b></span>
+        </a>
+        <a class="dashboard-metric metric-agents" href="{{ request.url_for('admin-agents') }}">
+            <span class="metric-icon" aria-hidden="true">A</span><span class="metric-label">Agents</span>
+            <strong>{{ counts.agents }}</strong><small>Postes provisionnés</small><span class="metric-link">Voir les agents <b aria-hidden="true">→</b></span>
+        </a>
+        <a class="dashboard-metric metric-activations" href="{{ request.url_for('admin-activations') }}">
+            <span class="metric-icon" aria-hidden="true">↗</span><span class="metric-label">Activations</span>
+            <strong>{{ counts.activations }}</strong><small>Codes générés</small><span class="metric-link">Voir les activations <b aria-hidden="true">→</b></span>
+        </a>
     </section>
 
-</div>
+    {% set chart_max = [counts.clients, counts.sites, counts.agents, counts.activations]|max %}
+    <section class="dashboard-panel dashboard-chart-panel" aria-labelledby="dashboard-chart-title">
+        <header class="dashboard-panel-heading">
+            <div><span class="dashboard-section-kicker">VUE DES DONNÉES</span><h2 id="dashboard-chart-title">Répartition actuelle</h2><p>Nombre d’éléments enregistrés par rubrique.</p></div>
+            <span class="chart-scale">Échelle relative · maximum = 100 %</span>
+        </header>
+        <div class="dashboard-chart" role="img" aria-label="Répartition des clients, sites, agents et activations enregistrés">
+            <div class="chart-row"><span class="chart-label">Clients</span><div class="chart-track"><span class="chart-bar bar-clients" style="--bar-width: {{ (counts.clients / chart_max * 100) if chart_max else 0 }}%"></span></div><strong>{{ counts.clients }}</strong></div>
+            <div class="chart-row"><span class="chart-label">Sites</span><div class="chart-track"><span class="chart-bar bar-sites" style="--bar-width: {{ (counts.sites / chart_max * 100) if chart_max else 0 }}%"></span></div><strong>{{ counts.sites }}</strong></div>
+            <div class="chart-row"><span class="chart-label">Agents</span><div class="chart-track"><span class="chart-bar bar-agents" style="--bar-width: {{ (counts.agents / chart_max * 100) if chart_max else 0 }}%"></span></div><strong>{{ counts.agents }}</strong></div>
+            <div class="chart-row"><span class="chart-label">Activations</span><div class="chart-track"><span class="chart-bar bar-activations" style="--bar-width: {{ (counts.activations / chart_max * 100) if chart_max else 0 }}%"></span></div><strong>{{ counts.activations }}</strong></div>
+        </div>
+    </section>
 
+    <section class="dashboard-recent-grid" aria-label="Activité récente">
+        <article class="dashboard-panel recent-panel">
+            <header class="dashboard-panel-heading">
+                <div><span class="dashboard-section-kicker">SUPERVISION</span><h2>Agents récents</h2><p>Derniers agents connus du serveur.</p></div>
+                <a class="panel-action" href="{{ request.url_for('admin-agents') }}">Tous les agents <span aria-hidden="true">→</span></a>
+            </header>
+            {% if recent_agents %}
+            <div class="recent-list">
+                {% for agent in recent_agents %}
+                <div class="recent-item"><span class="recent-avatar" aria-hidden="true">A</span><div class="recent-main"><strong>{{ agent.uid }}</strong><span>{{ agent.environment }} · version {{ agent.version }}</span></div><time>{{ agent.last_seen }}</time></div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dashboard-empty"><span aria-hidden="true">A</span><strong>Aucun agent provisionné</strong><p>Les nouveaux agents apparaîtront ici après leur première connexion.</p></div>
+            {% endif %}
+        </article>
+
+        <article class="dashboard-panel recent-panel">
+            <header class="dashboard-panel-heading">
+                <div><span class="dashboard-section-kicker">GESTION DES ACCÈS</span><h2>Activations récentes</h2><p>Derniers codes créés.</p></div>
+                <a class="panel-action" href="{{ request.url_for('admin-activations') }}">Toutes les activations <span aria-hidden="true">→</span></a>
+            </header>
+            {% if recent_activations %}
+            <div class="recent-list">
+                {% for activation in recent_activations %}
+                <div class="recent-item"><span class="recent-avatar activation-avatar" aria-hidden="true">↗</span><div class="recent-main"><strong>{{ activation.uid }}</strong><span class="activation-status">{{ activation.status }}</span></div><time>{{ activation.expires_at }}</time></div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dashboard-empty"><span aria-hidden="true">↗</span><strong>Aucune activation récente</strong><p>Les codes d’activation créés apparaîtront ici.</p></div>
+            {% endif %}
+        </article>
+    </section>
+</div>
 {% endblock %}

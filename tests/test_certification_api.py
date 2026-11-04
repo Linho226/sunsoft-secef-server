@@ -1018,3 +1018,93 @@ def test_tenant_cannot_read_other_tenant_certification(
         # On masque volontairement l'existence
         # d'une certification appartenant à B.
         assert response.status_code == 404
+
+
+def test_refund_payload_survives_odoo_to_agent(
+    tmp_path,
+) -> None:
+    app = _create_test_app(
+        tmp_path
+    )
+
+    request_uid = _new_uid()
+    invoice_number = "AVOIR/2026/001"
+
+    refund_payload = {
+        "customer": {
+            "customer_type": "PM",
+        },
+        "invoice": {
+            "invoice_number": invoice_number,
+            "invoice_type": "FA",
+            "refund_reason": "COR",
+            "reference_number": "DT02200630-1-95",
+        },
+        "items": [
+            {
+                "name": "Produit test",
+                "quantity": "1",
+                "unit_price": "1000",
+                "amount": "1180",
+                "tax_group": "B",
+                "tax_rate": "18",
+                "item_type": "LOCBIE",
+            },
+        ],
+        "payments": None,
+    }
+
+    with TestClient(app) as client:
+        provisioned = _provision_tenant_with_agent(
+            app
+        )
+
+        response = client.post(
+            "/api/v1/certifications",
+            headers=_auth_headers(
+                provisioned["odoo_token"]
+            ),
+            json={
+                "request_uid": request_uid,
+                "agent_uid": provisioned["agent_uid"],
+                "invoice_number": invoice_number,
+                "job_type": "invoice.certify",
+                "payload": refund_payload,
+            },
+        )
+
+        assert response.status_code == 200
+
+        with app.state.database.session() as session:
+            certification = CertificationRepository(
+                session
+            ).get_by_request_uid(
+                request_uid
+            )
+
+            assert certification is not None
+            assert certification.payload == refund_payload
+
+            job = CentralJobRepository(
+                session
+            ).get_for_certification(
+                certification.id
+            )
+
+            assert job is not None
+            assert job.payload == refund_payload
+
+        next_job = client.get(
+            (
+                f"/api/v1/agents/"
+                f"{provisioned['agent_uid']}"
+                "/jobs/next"
+            ),
+            headers=_auth_headers(
+                provisioned["agent_token"]
+            ),
+        )
+
+        assert next_job.status_code == 200
+        assert next_job.json()["job_type"] == "invoice.certify"
+        assert next_job.json()["payload"] == refund_payload

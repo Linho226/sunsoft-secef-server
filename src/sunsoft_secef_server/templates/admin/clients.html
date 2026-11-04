@@ -1,233 +1,113 @@
 {% extends "admin/base.html" %}
 
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/clients.css') }}?v=20261002-2">
+{% endblock %}
+
 {% block content %}
-
-<div class="client-layout">
-
-    <section class="panel client-form-panel">
-
-        <div class="panel-heading">
-            <div>
-                <h3>Nouveau client</h3>
-                <p>
-                    Enregistrez une entreprise
-                    dans le serveur central.
-                </p>
-            </div>
+<div class="clients-page">
+    <header class="clients-intro">
+        <div>
+            <span class="clients-eyebrow">RÉPERTOIRE CENTRAL</span>
+            <h2>Gestion des clients</h2>
+            <p>Enregistrez les entreprises et consultez leurs identifiants SECeF.</p>
         </div>
+        <div class="clients-total" aria-label="Nombre de clients enregistrés">
+            <span class="clients-total-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c.4-3 2.3-4.8 5.5-4.8s5.1 1.8 5.5 4.8M17 8v6m-3-3h6"/></svg>
+            </span>
+            <span><strong>{{ clients|length }}</strong><small>client(s) enregistré(s)</small></span>
+        </div>
+    </header>
 
-        <form
-            method="post"
-            action="{{ request.url_for('admin-client-create') }}"
-            class="admin-form"
-        >
+    <div class="client-layout clients-content-grid">
+        <section class="panel client-form-panel clients-create-card" aria-labelledby="client-create-title">
+            <div class="panel-heading clients-card-heading">
+                <span class="clients-heading-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                </span>
+                <div>
+                    <span class="clients-card-eyebrow">NOUVELLE FICHE</span>
+                    <h3 id="client-create-title">Ajouter un client</h3>
+                    <p>Créez une entreprise sur le serveur central.</p>
+                </div>
+            </div>
 
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="{{ csrf_token }}"
-            >
+            <form method="post" action="{{ request.url_for('admin-client-create') }}" class="admin-form clients-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-            {% if error %}
-            <div class="alert-error">
-                {{ error }}
+                {% if error %}
+                <div class="alert-error" role="alert">{{ error }}</div>
+                {% endif %}
+                {% if success %}
+                <div class="alert-success" role="status">Client créé avec succès.</div>
+                {% endif %}
+
+                <div class="form-field">
+                    <label for="client-name">Nom du client</label>
+                    <input id="client-name" type="text" name="name" value="{{ form_name }}" placeholder="Ex. Sunsoft International SARL" maxlength="255" autocomplete="organization" required>
+                    <small>Utilisez le nom officiel de l’entreprise.</small>
+                </div>
+
+                <button type="submit" class="action-button clients-submit">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    Créer le client
+                </button>
+                <p class="clients-form-note"><span aria-hidden="true">◆</span> L’identifiant SECeF sera généré automatiquement.</p>
+            </form>
+        </section>
+
+        <section class="panel client-list-panel clients-list-card" aria-labelledby="clients-list-title">
+            <div class="panel-heading clients-card-heading clients-list-heading">
+                <span class="clients-heading-icon is-list" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
+                </span>
+                <div>
+                    <span class="clients-card-eyebrow">VOTRE RÉPERTOIRE</span>
+                    <h3 id="clients-list-title">Clients enregistrés</h3>
+                    <p>Identifiants et état des entreprises.</p>
+                </div>
+                <span class="clients-count-badge">{{ clients|length }} au total</span>
+            </div>
+
+            {% if clients %}
+            <div class="table-wrapper clients-table-wrapper">
+                <table class="clients-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Client</th>
+                            <th scope="col">UID</th>
+                            <th scope="col">État</th>
+                            <th scope="col">Créé le</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                        <tr>
+                            <td data-label="Client">
+                                <div class="client-name-cell">
+                                    <span class="client-row-mark" aria-hidden="true">{{ loop.index }}</span>
+                                    <strong>{{ client.name }}</strong>
+                                </div>
+                            </td>
+                            <td class="mono client-uid" data-label="UID">{{ client.uid }}</td>
+                            <td data-label="État"><span class="status-badge active">{{ client.state }}</span></td>
+                            <td class="client-created" data-label="Créé le">{{ client.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="clients-empty-state">
+                <span class="clients-empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c.4-3 2.3-4.8 5.5-4.8s5.1 1.8 5.5 4.8M17 8v6m-3-3h6"/></svg>
+                </span>
+                <h4>Aucun client enregistré</h4>
+                <p>Ajoutez votre première entreprise avec le formulaire.</p>
             </div>
             {% endif %}
-
-            {% if success %}
-            <div class="alert-success">
-                Client cr&eacute;&eacute; avec succ&egrave;s.
-            </div>
-            {% endif %}
-
-            <div class="form-field">
-
-                <label for="client-name">
-                    Nom du client
-                </label>
-
-                <input
-                    id="client-name"
-                    type="text"
-                    name="name"
-                    value="{{ form_name }}"
-                    placeholder="Ex. SUNSOFT INTERNATIONAL SARL"
-                    maxlength="255"
-                    required
-                >
-
-            </div>
-
-            <button
-                type="submit"
-                class="action-button"
-            >
-                + Cr&eacute;er le client
-            </button>
-
-        </form>
-
-    </section>
-
-
-    <section class="panel client-list-panel">
-
-        <div class="panel-heading">
-            <div>
-                <h3>Clients enregistr&eacute;s</h3>
-                <p>
-                    {{ clients|length }}
-                    entreprise(s)
-                </p>
-            </div>
-        </div>
-
-        {% if clients %}
-
-        <div class="table-wrapper">
-
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>Client</th>
-                        <th>UID</th>
-                        <th>&Eacute;tat</th>
-                        <th>Cr&eacute;&eacute; le</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for client in clients %}
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                {{ client.name }}
-                            </strong>
-                        </td>
-
-                        <td class="mono">
-                            {{ client.uid }}
-                        </td>
-
-                        <td>
-                            <span class="status-badge active">
-                                {{ client.state }}
-                            </span>
-                        </td>
-
-                        <td>
-                            {{ client.created_at }}
-                        </td>
-
-                    </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        {% else %}
-
-        <div class="empty-state large">
-            Aucun client enregistr?.
-        </div>
-
-        {% endif %}
-
-    </section>
-
-
-    <section class="panel client-list-panel">
-        <div class="panel-heading">
-            <div>
-                <h3>Acc?s Odoo</h3>
-                <p>Associez une soci?t? Odoo ? son client SECeF.</p>
-            </div>
-        </div>
-
-        {% if credential_error %}
-        <div class="alert-error">{{ credential_error }}</div>
-        {% endif %}
-
-        {% if generated_token %}
-        <div class="alert-success">
-            <strong>Copiez ce token maintenant : il ne sera plus affich?.</strong>
-            <p class="mono">{{ generated_token }}</p>
-            <p>UID de cet acc?s : {{ generated_uid }}</p>
-        </div>
-        {% endif %}
-
-        <form method="post"
-              action="{{ request.url_for('admin-odoo-credential-create') }}"
-              class="admin-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <div class="form-field">
-                <label for="odoo-client">Client SECeF</label>
-                <select id="odoo-client" name="tenant_uid" required>
-                    <option value="">Choisir un client</option>
-                    {% for client in clients %}
-                    <option value="{{ client.uid }}">
-                        {{ client.name }} ? {{ client.uid }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="action-button">
-                G?n?rer un token Odoo
-            </button>
-        </form>
-
-        {% if odoo_credentials %}
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Client</th>
-                        <th>UID acc?s</th>
-                        <th>?tat</th>
-                        <th>Derni?re utilisation</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for access in odoo_credentials %}
-                    <tr>
-                        <td>{{ access.client }}</td>
-                        <td class="mono">{{ access.uid }}</td>
-                        <td>{{ "Actif" if access.active else "R?voqu?" }}</td>
-                        <td>{{ access.last_used_at }}</td>
-                        <td>
-                            {% if access.active %}
-                            <form method="post"
-                                  action="{{ request.url_for(
-                                      'admin-odoo-credential-revoke',
-                                      credential_uid=access.uid
-                                  ) }}">
-                                <input type="hidden"
-                                       name="csrf_token"
-                                       value="{{ csrf_token }}">
-                                <button type="submit"
-                                        onclick="return confirm('R?voquer cet acc?s Odoo ?')">
-                                    R?voquer
-                                </button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-    </section>
-
+        </section>
+    </div>
 </div>
-
 {% endblock %}

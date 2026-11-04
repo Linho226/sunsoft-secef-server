@@ -1,4 +1,8 @@
-﻿{% extends "admin/base.html" %}
+{% extends "admin/base.html" %}
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/agents.css') }}?v=20261002-2">
+{% endblock %}
+
 
 {% block content %}
 

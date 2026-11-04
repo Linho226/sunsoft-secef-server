@@ -1,0 +1,175 @@
+/* SUNSOFT ADMIN PATCH 2A CLIENTS */
+
+.client-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(300px, 390px)
+        minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.client-form-panel {
+    position: sticky;
+    top: 18px;
+}
+
+.client-list-panel {
+    min-width: 0;
+}
+
+.admin-form {
+    padding: 22px;
+}
+
+.form-field {
+    margin-bottom: 18px;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.form-field input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 13px;
+    border: 1px solid #d6dde7;
+    border-radius: 10px;
+    outline: none;
+}
+
+.form-field input:focus {
+    border-color: var(--primary);
+    box-shadow:
+        0 0 0 3px
+        rgba(18, 103, 229, .10);
+}
+
+.action-button {
+    width: 100%;
+    min-height: 47px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.alert-success {
+    margin-bottom: 18px;
+    padding: 11px 13px;
+    border: 1px solid #b7ebc7;
+    border-radius: 9px;
+    background: #f0fff5;
+    color: #137333;
+    font-size: 12px;
+}
+
+.status-badge.active {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eafaf0;
+    color: #15763b;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.mono {
+    font-family: Consolas, monospace;
+    font-size: 11px;
+}
+
+@media (max-width: 1100px) {
+
+    .client-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .client-form-panel {
+        position: static;
+    }
+}
+
+
+/* SUNSOFT ADMIN PATCH 2B SITES */
+
+
+@media (max-width: 760px) { .client-layout { grid-template-columns: 1fr; gap: 16px; } .client-form-panel, .client-list-panel { min-width: 0; } .client-list-panel .table-wrapper { overflow-x: auto; } .client-list-panel table { min-width: 620px; } }
+
+/* Présentation de la fiche clients */
+.clients-page { display: grid; gap: 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
+.clients-intro { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 4px 1px 2px; }
+.clients-eyebrow, .clients-card-eyebrow { display: block; color: #5b718b; font-size: 9px; font-weight: 800; letter-spacing: .11em; }
+.clients-intro h2 { margin: 5px 0 4px; color: #17263b; font-size: 23px; font-weight: 720; letter-spacing: -.025em; }
+.clients-intro p { margin: 0; color: #5e6d81; font-size: 13px; line-height: 1.5; }
+.clients-total { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #dce3ec; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(25,42,65,.03); }
+.clients-total-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: #edf4fb; color: #315f96; }
+.clients-total-icon svg, .clients-heading-icon svg, .clients-submit svg, .clients-empty-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.clients-total strong, .clients-total small { display: block; }
+.clients-total strong { color: #1d3048; font-size: 16px; line-height: 1.1; }
+.clients-total small { margin-top: 3px; color: #64748a; font-size: 10px; }
+.clients-content-grid { grid-template-columns: minmax(285px, 350px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.clients-create-card, .clients-list-card { position: static; border-color: #dce3ec; border-radius: 14px; box-shadow: 0 4px 14px rgba(25,42,65,.04); }
+.clients-card-heading { display: flex; align-items: center; gap: 12px; padding: 19px 20px; background: linear-gradient(180deg, #fff, #fbfcfe); }
+.clients-heading-icon { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid #d8e5f3; border-radius: 11px; background: #edf4fb; color: #315f96; }
+.clients-heading-icon.is-list { color: #536e8c; background: #f1f4f8; border-color: #e1e7ee; }
+.clients-card-heading h3 { margin: 4px 0 3px; color: #1b2c42; font-size: 15px; font-weight: 700; }
+.clients-card-heading p { color: #5f6e82; font-size: 11px; }
+.clients-form { padding: 21px 20px 18px; }
+.clients-form .form-field { margin-bottom: 15px; }
+.clients-form .form-field label { color: #27384d; font-size: 12px; }
+.clients-form .form-field input { min-height: 46px; border-color: #c9d3df; border-radius: 8px; background: #fff; color: #1f2e42; font-size: 13px; transition: border-color .16s ease, box-shadow .16s ease; }
+.clients-form .form-field input::placeholder { color: #8793a3; }
+.clients-form .form-field input:focus { border-color: #4776ad; box-shadow: 0 0 0 3px rgba(36,91,158,.13); }
+.clients-form .form-field small { display: block; margin-top: 7px; color: #65748a; font-size: 10px; line-height: 1.45; }
+.clients-submit { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 45px; border-radius: 8px; background: #245b9e; box-shadow: 0 3px 8px rgba(36,91,158,.15); font-size: 13px; transition: background .16s ease, transform .16s ease; }
+.clients-submit:hover { transform: translateY(-1px); background: #1b477d; }
+.clients-submit svg { width: 16px; height: 16px; }
+.clients-form-note { display: flex; align-items: center; gap: 7px; margin: 13px 0 0; color: #65748a; font-size: 10px; line-height: 1.5; }
+.clients-form-note span { color: #6685a8; font-size: 8px; }
+.clients-form .alert-success, .clients-form .alert-error { margin-bottom: 15px; }
+.clients-list-heading { min-height: 81px; }
+.clients-count-badge { margin-left: auto; padding: 6px 9px; border: 1px solid #dce3ec; border-radius: 99px; background: #f5f7fa; color: #4f6075; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.clients-table { min-width: 660px; }
+.clients-table th { padding: 12px 16px; background: #f5f7fa; color: #52647a; font-size: 9px; letter-spacing: .07em; }
+.clients-table td { padding: 14px 16px; border-top-color: #edf1f5; color: #26364b; font-size: 12px; }
+.clients-table tbody tr { transition: background .14s ease; }
+.clients-table tbody tr:hover { background: #f8fafc; }
+.client-name-cell { display: flex; align-items: center; gap: 9px; min-width: 150px; }
+.client-name-cell strong { color: #203149; font-size: 12px; }
+.client-row-mark { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border: 1px solid #e0e7ef; border-radius: 8px; background: #f3f6fa; color: #536c89; font-size: 10px; font-weight: 750; }
+.client-uid { color: #53647a !important; font-size: 10px !important; }
+.client-created { color: #56677c !important; font-size: 11px !important; }
+.clients-table .status-badge.active { padding: 5px 8px; background: #eaf3ed; color: #286243; font-size: 10px; }
+.clients-empty-state { display: grid; justify-items: center; padding: 38px 20px 42px; text-align: center; }
+.clients-empty-icon { display: grid; width: 46px; height: 46px; place-items: center; border: 1px solid #dfe7f0; border-radius: 13px; background: #f2f5f9; color: #5a718d; }
+.clients-empty-state h4 { margin: 12px 0 4px; color: #293a50; font-size: 13px; }
+.clients-empty-state p { margin: 0; color: #65748a; font-size: 11px; }
+@media (max-width: 1100px) { .clients-content-grid { grid-template-columns: 1fr; } .clients-create-card { max-width: none; } }
+@media (max-width: 700px) { .clients-page { gap: 15px; } .clients-intro { align-items: flex-start; } .clients-intro h2 { font-size: 21px; } .clients-total { padding: 8px 10px; } .clients-content-grid { gap: 14px; } }
+@media (max-width: 560px) {
+    .clients-intro { flex-direction: column; gap: 12px; }
+    .clients-total { width: 100%; }
+    .clients-total small { font-size: 11px; }
+    .clients-card-heading { padding: 16px; }
+    .clients-form { padding: 18px 16px 16px; }
+    .clients-list-heading { flex-wrap: wrap; }
+    .clients-count-badge { margin-left: 50px; }
+    .clients-table-wrapper { overflow: visible; }
+    .clients-table { display: block; min-width: 0; }
+    .clients-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .clients-table tbody { display: grid; gap: 10px; padding: 12px; }
+    .clients-table tbody tr { display: block; padding: 4px 12px; border: 1px solid #e4eaf1; border-radius: 10px; background: #fff; }
+    .clients-table td { display: grid; grid-template-columns: 86px minmax(0,1fr); align-items: center; gap: 9px; padding: 9px 0; border-top: 1px solid #eff2f6; white-space: normal; overflow-wrap: anywhere; }
+    .clients-table td:first-child { border-top: 0; }
+    .clients-table td::before { content: attr(data-label); color: #65748a; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .client-name-cell { min-width: 0; }
+    .client-name-cell strong { overflow-wrap: anywhere; }
+    .client-uid { font-size: 10px !important; }
+}

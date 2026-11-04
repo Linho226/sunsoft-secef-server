@@ -181,7 +181,7 @@ def test_public_agent_portal(
         )
 
         assert page.status_code == 200
-        assert "Version 1.2.3" in page.text
+        assert "1.2.3" in page.text
         assert "Version publique de test." in page.text
         assert sha.upper() in page.text
         assert 'href="/download/agent"' in page.text

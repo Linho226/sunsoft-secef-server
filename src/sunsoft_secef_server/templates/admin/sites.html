@@ -1,222 +1,122 @@
 {% extends "admin/base.html" %}
 
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/clients.css') }}?v=20261002-3">
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/sites.css') }}?v=20261002-3">
+{% endblock %}
+
 {% block content %}
-
-<div class="client-layout">
-
-    <section class="panel client-form-panel">
-
-        <div class="panel-heading">
-            <div>
-                <h3>Nouveau site</h3>
-
-                <p>
-                    Rattachez une implantation
-                    &agrave; un client.
-                </p>
-            </div>
+<div class="sites-page">
+    <header class="sites-intro">
+        <div>
+            <span class="sites-eyebrow">RÉSEAU D’IMPLANTATIONS</span>
+            <h2>Gestion des sites</h2>
+            <p>Rattachez les lieux d’activité à leurs clients SECeF.</p>
         </div>
+        <div class="sites-total" aria-label="Nombre de sites enregistrés">
+            <span class="sites-total-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg>
+            </span>
+            <span><strong>{{ sites|length }}</strong><small>site(s) enregistré(s)</small></span>
+        </div>
+    </header>
 
-
-        <form
-            method="post"
-            action="{{ request.url_for('admin-site-create') }}"
-            class="admin-form"
-        >
-
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="{{ csrf_token }}"
-            >
-
-            {% if error %}
-            <div class="alert-error">
-                {{ error }}
-            </div>
-            {% endif %}
-
-            {% if success %}
-            <div class="alert-success">
-                Site cr&eacute;&eacute; avec succ&egrave;s.
-            </div>
-            {% endif %}
-
-
-            {% if tenants %}
-
-            <div class="form-field">
-
-                <label for="tenant_uid">
-                    Client
-                </label>
-
-                <select
-                    id="tenant_uid"
-                    name="tenant_uid"
-                    required
-                >
-
-                    <option value="">
-                        S&eacute;lectionner un client
-                    </option>
-
-                    {% for tenant in tenants %}
-
-                    <option
-                        value="{{ tenant.tenant_uid }}"
-                        {% if tenant.tenant_uid == selected_tenant_uid %}
-                        selected
-                        {% endif %}
-                    >
-                        {{ tenant.name }}
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-
+    <div class="client-layout sites-content-grid">
+        <section class="panel client-form-panel sites-create-card" aria-labelledby="site-create-title">
+            <div class="panel-heading clients-card-heading">
+                <span class="clients-heading-icon sites-heading-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg>
+                </span>
+                <div>
+                    <span class="clients-card-eyebrow">NOUVELLE IMPLANTATION</span>
+                    <h3 id="site-create-title">Ajouter un site</h3>
+                    <p>Associez une implantation à un client.</p>
+                </div>
             </div>
 
+            <form method="post" action="{{ request.url_for('admin-site-create') }}" class="admin-form clients-form sites-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if error %}<div class="alert-error" role="alert">{{ error }}</div>{% endif %}
+                {% if success %}<div class="alert-success" role="status">Site créé avec succès.</div>{% endif %}
 
-            <div class="form-field">
+                {% if tenants %}
+                <div class="form-field">
+                    <label for="tenant_uid">Client associé</label>
+                    <select id="tenant_uid" name="tenant_uid" required>
+                        <option value="">Sélectionner un client</option>
+                        {% for tenant in tenants %}
+                        <option value="{{ tenant.tenant_uid }}" {% if tenant.tenant_uid == selected_tenant_uid %}selected{% endif %}>{{ tenant.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small>Choisissez l’entreprise à laquelle ce site sera rattaché.</small>
+                </div>
 
-                <label for="site-code">
-                    Code du site
-                </label>
+                <div class="form-field">
+                    <label for="site-code">Code du site</label>
+                    <input id="site-code" type="text" name="code" value="{{ form_code }}" placeholder="Ex. SIEGE" maxlength="100" autocomplete="off" required>
+                    <small>Un code court pour identifier cette implantation.</small>
+                </div>
 
-                <input
-                    id="site-code"
-                    type="text"
-                    name="code"
-                    value="{{ form_code }}"
-                    placeholder="Ex. SIEGE"
-                    maxlength="100"
-                    required
-                >
+                <div class="form-field">
+                    <label for="site-name">Nom du site</label>
+                    <input id="site-name" type="text" name="name" value="{{ form_name }}" placeholder="Ex. Siège Ouagadougou" maxlength="255" autocomplete="organization" required>
+                </div>
 
+                <button type="submit" class="action-button clients-submit sites-submit">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    Créer le site
+                </button>
+                <p class="clients-form-note"><span aria-hidden="true">◆</span> L’UID du site sera généré automatiquement.</p>
+                {% else %}
+                <div class="sites-no-client" role="status">
+                    <strong>Aucun client actif disponible</strong>
+                    <p>Créez d’abord un client pour pouvoir lui rattacher un site.</p>
+                    <a href="{{ request.url_for('admin-clients') }}">Ouvrir la page Clients <span aria-hidden="true">→</span></a>
+                </div>
+                {% endif %}
+            </form>
+        </section>
+
+        <section class="panel client-list-panel sites-list-card" aria-labelledby="sites-list-title">
+            <div class="panel-heading clients-card-heading sites-list-heading">
+                <span class="clients-heading-icon sites-heading-icon is-list" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg>
+                </span>
+                <div>
+                    <span class="clients-card-eyebrow">IMPLANTATIONS SECEF</span>
+                    <h3 id="sites-list-title">Sites enregistrés</h3>
+                    <p>Sites et clients associés.</p>
+                </div>
+                <span class="clients-count-badge sites-count-badge">{{ sites|length }} au total</span>
             </div>
 
-
-            <div class="form-field">
-
-                <label for="site-name">
-                    Nom du site
-                </label>
-
-                <input
-                    id="site-name"
-                    type="text"
-                    name="name"
-                    value="{{ form_name }}"
-                    placeholder="Ex. Si&egrave;ge Ouagadougou"
-                    maxlength="255"
-                    required
-                >
-
+            {% if sites %}
+            <div class="table-wrapper sites-table-wrapper">
+                <table class="sites-table">
+                    <thead>
+                        <tr><th scope="col">Site</th><th scope="col">Code</th><th scope="col">Client</th><th scope="col">UID</th><th scope="col">État</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for site in sites %}
+                        <tr>
+                            <td data-label="Site"><div class="site-name-cell"><span class="site-row-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><strong>{{ site.name }}</strong></div></td>
+                            <td data-label="Code"><span class="site-code-badge">{{ site.code }}</span></td>
+                            <td data-label="Client">{{ site.tenant_name }}</td>
+                            <td class="mono site-uid" data-label="UID">{{ site.uid }}</td>
+                            <td data-label="État"><span class="status-badge active">{{ site.state }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-
-
-            <button
-                type="submit"
-                class="action-button"
-            >
-                + Cr&eacute;er le site
-            </button>
-
             {% else %}
-
-            <div class="alert-error">
-                Aucun client actif disponible.
+            <div class="sites-empty-state">
+                <span class="sites-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg></span>
+                <h4>Aucun site enregistré</h4>
+                <p>Les sites créés apparaîtront ici avec leur client et leur identifiant.</p>
             </div>
-
             {% endif %}
-
-        </form>
-
-    </section>
-
-
-    <section class="panel client-list-panel">
-
-        <div class="panel-heading">
-            <div>
-                <h3>Sites enregistr&eacute;s</h3>
-
-                <p>
-                    {{ sites|length }}
-                    site(s)
-                </p>
-            </div>
-        </div>
-
-
-        {% if sites %}
-
-        <div class="table-wrapper">
-
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>Site</th>
-                        <th>Code</th>
-                        <th>Client</th>
-                        <th>UID</th>
-                        <th>&Eacute;tat</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for site in sites %}
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                {{ site.name }}
-                            </strong>
-                        </td>
-
-                        <td>
-                            {{ site.code }}
-                        </td>
-
-                        <td>
-                            {{ site.tenant_name }}
-                        </td>
-
-                        <td class="mono">
-                            {{ site.uid }}
-                        </td>
-
-                        <td>
-                            <span class="status-badge active">
-                                {{ site.state }}
-                            </span>
-                        </td>
-
-                    </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        {% else %}
-
-        <div class="empty-state large">
-            Aucun site enregistr&eacute;.
-        </div>
-
-        {% endif %}
-
-    </section>
-
+        </section>
+    </div>
 </div>
-
 {% endblock %}

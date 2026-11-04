@@ -166,16 +166,11 @@ def test_agents_admin_v1_page(
         )
 
         assert (
-            "SUPERVISION AGENTS"
+            "SUPERVISION DES AGENTS"
             in page.text
         )
 
         assert (
-            "Aucun Agent provisionné"
-            in page.text
-        )
-
-        assert (
-            "Fonctionnalités complémentaires"
+            "Aucun agent provisionné"
             in page.text
         )

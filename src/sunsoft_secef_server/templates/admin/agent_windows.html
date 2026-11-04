@@ -1,398 +1,120 @@
 {% extends "admin/base.html" %}
 
+{% block page_styles %}
+<link rel="stylesheet" href="{{ request.url_for('admin-static', path='admin/agent-windows.css') }}?v=20261002-3">
+{% endblock %}
+
 {% block content %}
-
 <div class="release-page">
-
-    {% if error %}
-    <div class="alert alert-error">
-        {{ error }}
-    </div>
-    {% endif %}
-
-    {% if uploaded %}
-    <div class="alert alert-success">
-        Version upload&eacute;e avec succ&egrave;s.
-        Elle est encore en brouillon.
-    </div>
-    {% endif %}
-
-    {% if published %}
-    <div class="alert alert-success">
-        Version publi&eacute;e avec succ&egrave;s.
-    </div>
-    {% endif %}
-
-    {% if archived %}
-    <div class="alert alert-success">
-        Version archiv&eacute;e avec succ&egrave;s.
-    </div>
-    {% endif %}
-
+    {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+    {% if uploaded %}<div class="alert alert-success" role="status">Version téléversée avec succès. Elle est encore en brouillon.</div>{% endif %}
+    {% if published %}<div class="alert alert-success" role="status">Version publiée avec succès.</div>{% endif %}
+    {% if archived %}<div class="alert alert-success" role="status">Version archivée avec succès.</div>{% endif %}
 
     <section class="release-hero">
-
-        <div>
-
-            <div class="release-eyebrow">
-                DISTRIBUTION LOGICIELLE
-            </div>
-
-            <h2>
-                Agent Windows Sunsoft SECeF
-            </h2>
-
-            <p>
-                G&eacute;rez ici les versions de
-                l'Agent Windows mises &agrave;
-                disposition des clients.
-            </p>
-
+        <div class="release-hero-copy">
+            <div class="release-eyebrow">DISTRIBUTION LOGICIELLE</div>
+            <h2>Agent Windows Sunsoft SECeF</h2>
+            <p>Gérez les versions de l’Agent Windows mises à disposition de vos clients.</p>
         </div>
-
         {% if current %}
-
         <div class="release-current">
-
-            <span class="release-current-label">
-                VERSION ACTUELLE
-            </span>
-
-            <strong>
-                {{ current.version }}
-            </strong>
-
-            <span>
-                {{ current.filename }}
-            </span>
-
-            <a
-                class="release-primary-button"
-                href="{{ request.url_for(
-                    'admin-agent-release-download',
-                    release_uid=current.uid
-                ) }}"
-            >
-                T&eacute;l&eacute;charger
-            </a>
-
+            <span class="release-current-label">VERSION PUBLIÉE</span>
+            <strong>{{ current.version }}</strong>
+            <span>{{ current.filename }}</span>
+            <a class="release-primary-button" href="{{ request.url_for('admin-agent-release-download', release_uid=current.uid) }}">Télécharger la version <span aria-hidden="true">↓</span></a>
         </div>
-
         {% else %}
-
         <div class="release-current release-current-empty">
-
-            <span class="release-current-label">
-                AUCUNE VERSION PUBLI&Eacute;E
-            </span>
-
-            <strong>
-                -
-            </strong>
-
-            <span>
-                Uploadez puis publiez
-                une version.
-            </span>
-
+            <span class="release-current-label">AUCUNE VERSION PUBLIÉE</span>
+            <strong>—</strong>
+            <span>Téléversez puis publiez une version pour commencer.</span>
         </div>
-
         {% endif %}
-
     </section>
 
-
-
     <div class="release-grid">
-
-        <section class="panel release-upload-panel">
-
-            <div class="panel-header">
-
-                <div>
-                    <h3>Nouvelle version</h3>
-                    <p>
-                        Ajoutez un installateur
-                        avant sa publication.
-                    </p>
-                </div>
-
+        <section class="panel release-upload-panel" aria-labelledby="release-upload-title">
+            <div class="release-panel-heading">
+                <span class="release-panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span>
+                <div><span class="release-panel-eyebrow">NOUVEAU DÉPLOIEMENT</span><h3 id="release-upload-title">Ajouter une version</h3><p>Elle sera créée en brouillon avant publication.</p></div>
             </div>
 
-            <form
-                method="post"
-                enctype="multipart/form-data"
-                action="{{ request.url_for('admin-agent-release-upload') }}"
-                class="admin-form"
-            >
-
-                <input
-                    type="hidden"
-                    name="csrf_token"
-                    value="{{ csrf_token }}"
-                >
-
-                <label>
-                    Version
-                </label>
-
-                <input
-                    type="text"
-                    name="version"
-                    maxlength="64"
-                    placeholder="Ex. 1.0.0"
-                    value="{{ form_version }}"
-                    required
-                >
-
-                <label>
-                    Installateur
-                </label>
-
-                <input
-                    type="file"
-                    name="installer"
-                    accept=".exe,.msi,.zip"
-                    required
-                >
-
-                <div class="release-upload-help">
-                    Formats accept&eacute;s :
-                    EXE, MSI, ZIP.
-                    Taille maximale :
-                    {{ max_upload_mb }} MB.
+            <form method="post" enctype="multipart/form-data" action="{{ request.url_for('admin-agent-release-upload') }}" class="admin-form release-upload-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="release-field">
+                    <label for="release-version">Numéro de version</label>
+                    <input id="release-version" type="text" name="version" maxlength="64" placeholder="Ex. 1.0.0" value="{{ form_version }}" required>
                 </div>
-
-                <label>
-                    Notes de version
-                </label>
-
-                <textarea
-                    name="release_notes"
-                    maxlength="5000"
-                    rows="6"
-                    placeholder="Nouveaut&eacute;s, corrections, informations importantes..."
-                >{{ form_notes }}</textarea>
-
-                <button
-                    type="submit"
-                    class="release-primary-button release-submit"
-                >
-                    Uploader la version
-                </button>
-
+                <div class="release-field">
+                    <label for="release-installer">Fichier installateur</label>
+                    <input id="release-installer" type="file" name="installer" accept=".exe,.msi,.zip" required>
+                </div>
+                <div class="release-upload-help"><span aria-hidden="true">ⓘ</span> Formats acceptés : EXE, MSI ou ZIP. Taille maximale : {{ max_upload_mb }} Mo.</div>
+                <div class="release-field release-notes-field">
+                    <label for="release-notes">Notes de version <span>Facultatif</span></label>
+                    <textarea id="release-notes" name="release_notes" maxlength="5000" rows="5" placeholder="Nouveautés, corrections et informations importantes…">{{ form_notes }}</textarea>
+                </div>
+                <button type="submit" class="release-primary-button release-submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-5 5 5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Téléverser en brouillon</button>
             </form>
-
         </section>
 
-
-        <section class="panel release-history-panel">
-
-            <div class="panel-header">
-
-                <div>
-                    <h3>Historique des versions</h3>
-                    <p>
-                        Une seule version peut
-                        &ecirc;tre publi&eacute;e
-                        &agrave; la fois.
-                    </p>
-                </div>
-
-            </div>
-
+        <section class="panel release-history-panel" aria-labelledby="release-history-title">
+            <header class="release-history-heading">
+                <div><span class="release-panel-eyebrow">SUIVI DES PUBLICATIONS</span><h3 id="release-history-title">Historique des versions</h3><p>Une seule version peut être publiée à la fois.</p></div>
+                <span class="release-history-count">{{ releases|length }} version(s)</span>
+            </header>
             {% if releases %}
-
-            <div class="table-wrap">
-
-                <table>
-
-                    <thead>
-                        <tr>
-                            <th>Version</th>
-                            <th>Fichier</th>
-                            <th>Taille</th>
-                            <th>Statut</th>
-                            <th>Publication</th>
-                            <th>SHA-256</th>
-                            <th class="release-actions-heading">Actions</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-
+            <div class="table-wrap release-table-wrap">
+                <table class="release-table">
+                    <thead><tr><th scope="col">Version</th><th scope="col">Fichier</th><th scope="col">Taille</th><th scope="col">Statut</th><th scope="col">Publication</th><th scope="col">SHA-256</th><th scope="col" class="release-actions-heading">Actions</th></tr></thead>
                     <tbody>
-
-                    {% for release in releases %}
-
+                        {% for release in releases %}
                         <tr>
-
-                            <td>
-                                <strong>
-                                    {{ release.version }}
-                                </strong>
+                            <td data-label="Version"><strong class="release-version-value">{{ release.version }}</strong></td>
+                            <td data-label="Fichier"><span class="release-filename">{{ release.filename }}</span></td>
+                            <td data-label="Taille">{{ release.size }}</td>
+                            <td data-label="Statut">
+                                {% if release.state == "published" %}<span class="status status-active">Publiée</span>
+                                {% elif release.state == "archive" %}<span class="status status-inactive">Archivée</span>
+                                {% elif release.state == "previous" %}<span class="status">Ancienne</span>
+                                {% else %}<span class="status">Brouillon</span>{% endif %}
                             </td>
-
-                            <td>
-                                {{ release.filename }}
-                            </td>
-
-                            <td>
-                                {{ release.size }}
-                            </td>
-
-                            <td>
-
-                                {% if release.state == "published" %}
-
-                                <span class="status status-active">
-                                    Publi&eacute;e
-                                </span>
-
-                                {% elif release.state == "archive" %}
-
-                                <span class="status status-inactive">
-                                    Archiv&eacute;e
-                                </span>
-
-                                {% elif release.state == "previous" %}
-
-                                <span class="status">
-                                    Ancienne
-                                </span>
-
-                                {% else %}
-
-                                <span class="status">
-                                    Brouillon
-                                </span>
-
-                                {% endif %}
-
-                            </td>
-
-                            <td>
-                                {{ release.published_at }}
-                            </td>
-
-                            <td>
-                                <code class="release-table-hash">
-                                    {{ release.sha256 }}
-                                </code>
-                            </td>
-
-                            <td class="release-actions-cell">
+                            <td data-label="Publication">{{ release.published_at }}</td>
+                            <td data-label="SHA-256"><code class="release-table-hash" title="{{ release.sha256 }}">{{ release.sha256 }}</code></td>
+                            <td class="release-actions-cell" data-label="Actions">
                                 <div class="release-actions">
-
-                                    <a
-                                        href="{{ request.url_for(
-                                            'admin-agent-release-download',
-                                            release_uid=release.uid
-                                        ) }}"
-                                        class="release-action-link"
-                                    >
-                                        T&eacute;l&eacute;charger
-                                    </a>
-
+                                    <a href="{{ request.url_for('admin-agent-release-download', release_uid=release.uid) }}" class="release-action-link">Télécharger</a>
                                     {% if not release.archived and not release.published %}
-
-                                    <form
-                                        method="post"
-                                        action="{{ request.url_for(
-                                            'admin-agent-release-publish',
-                                            release_uid=release.uid
-                                        ) }}"
-                                        onsubmit="return confirm(
-                                            'Publier cette version comme version actuelle ?'
-                                        );"
-                                    >
-
-                                        <input
-                                            type="hidden"
-                                            name="csrf_token"
-                                            value="{{ csrf_token }}"
-                                        >
-
-                                        <button
-                                            type="submit"
-                                            class="release-publish-button"
-                                        >
-                                            Publier
-                                        </button>
-
+                                    <form method="post" action="{{ request.url_for('admin-agent-release-publish', release_uid=release.uid) }}" onsubmit="return confirm('Publier cette version comme version actuelle ?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button type="submit" class="release-publish-button">Publier</button>
                                     </form>
-
                                     {% endif %}
-
-
                                     {% if not release.archived %}
-
-                                    <form
-                                        method="post"
-                                        action="{{ request.url_for(
-                                            'admin-agent-release-archive',
-                                            release_uid=release.uid
-                                        ) }}"
-                                        onsubmit="return confirm(
-                                            'Archiver cette version ?'
-                                        );"
-                                    >
-
-                                        <input
-                                            type="hidden"
-                                            name="csrf_token"
-                                            value="{{ csrf_token }}"
-                                        >
-
-                                        <button
-                                            type="submit"
-                                            class="release-archive-button"
-                                        >
-                                            Archiver
-                                        </button>
-
+                                    <form method="post" action="{{ request.url_for('admin-agent-release-archive', release_uid=release.uid) }}" onsubmit="return confirm('Archiver cette version ?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button type="submit" class="release-archive-button">Archiver</button>
                                     </form>
-
                                     {% endif %}
-
                                 </div>
-
                             </td>
-
                         </tr>
-
                         {% if release.notes %}
-
-                        <tr class="release-notes-row">
-                            <td colspan="7">
-                                <strong>
-                                    Notes :
-                                </strong>
-                                {{ release.notes }}
-                            </td>
-                        </tr>
-
+                        <tr class="release-notes-row"><td colspan="7" data-label="Notes"><strong>Notes de version</strong><span>{{ release.notes }}</span></td></tr>
                         {% endif %}
-
-                    {% endfor %}
-
+                        {% endfor %}
                     </tbody>
-
                 </table>
-
             </div>
-
             {% else %}
-
-            <div class="empty-state">
-                Aucune version Agent upload&eacute;e.
+            <div class="release-empty-state">
+                <span class="release-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span>
+                <h4>Aucune version téléversée</h4>
+                <p>Les versions ajoutées apparaîtront ici avec leur statut, leur empreinte et leurs actions.</p>
             </div>
-
             {% endif %}
-
         </section>
-
     </div>
-
 </div>
-
 {% endblock %}

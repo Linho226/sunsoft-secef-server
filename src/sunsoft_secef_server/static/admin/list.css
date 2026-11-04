@@ -1,0 +1,6 @@
+.page-intro { margin-bottom: 1.25rem; }
+.table-panel { min-width: 0; }
+@media (max-width: 760px) { .table-wrapper { overflow-x: auto; } .table-wrapper table { min-width: 640px; } }
+
+.page-intro { margin-bottom: 1.25rem; } .table-panel { min-width: 0; }
+@media (max-width: 760px) { .table-wrapper { overflow-x: auto; } .table-wrapper table { min-width: 640px; } }
