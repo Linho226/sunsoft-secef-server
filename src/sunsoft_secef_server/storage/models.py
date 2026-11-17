@@ -271,6 +271,85 @@ class Agent(Base):
         back_populates="agent",
     )
 
+    mcf_status: Mapped[
+        "AgentMCFStatus | None"
+    ] = relationship(
+        back_populates="agent",
+        cascade="all, delete-orphan",
+        uselist=False,
+        single_parent=True,
+    )
+
+
+class AgentMCFStatus(Base):
+    """
+    Dernier etat C2h connu pour un Agent.
+
+    last_connection_datetime conserve volontairement
+    la valeur brute AAAAMMJJHHmmss fournie par le MCF.
+    Aucun fuseau horaire n'est suppose ici.
+    """
+
+    __tablename__ = "agent_mcf_status"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    agent_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "agents.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        unique=True,
+    )
+
+    sent_transactions: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    available_transactions: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    last_connection_datetime: Mapped[str] = mapped_column(
+        String(14),
+        nullable=False,
+    )
+
+    connection_age_seconds: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    connection_stale: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    last_error: Mapped[
+        str | None
+    ] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    status_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
+
+    agent: Mapped["Agent"] = relationship(
+        back_populates="mcf_status",
+    )
+
 
 class OdooCredential(Base):
     """

@@ -13,6 +13,7 @@ from sunsoft_secef_server.storage.database import (
 from sunsoft_secef_server.storage.models import (
     Agent,
     AgentCredential,
+    AgentMCFStatus,
     OdooCredential,
     Tenant,
 )
@@ -250,6 +251,83 @@ def test_plaintext_tokens_are_not_stored(
                 stored.token_hash
                 == hash_token(token)
             )
+
+    finally:
+        database.dispose()
+
+
+def test_agent_mcf_status_is_persisted(
+    tmp_path,
+) -> None:
+    database = Database(
+        f"sqlite:///{tmp_path / 'mcf-status.db'}"
+    )
+
+    database.initialize()
+
+    try:
+        with database.session() as session:
+            tenant = Tenant(
+                tenant_uid=_new_uid(),
+                name="MCF STATUS TEST",
+            )
+
+            session.add(tenant)
+            session.flush()
+
+            agent = Agent(
+                tenant_id=tenant.id,
+                agent_uid=_new_uid(),
+                version="0.1.0",
+                environment="test",
+            )
+
+            session.add(agent)
+            session.flush()
+
+            status = AgentMCFStatus(
+                agent_id=agent.id,
+                sent_transactions=12,
+                available_transactions=88,
+                last_connection_datetime=(
+                    "20261116093000"
+                ),
+                connection_age_seconds=3600,
+                connection_stale=False,
+                last_error=None,
+            )
+
+            session.add(status)
+            session.commit()
+
+            agent_id = agent.id
+
+        with database.session() as session:
+            stored_agent = session.get(
+                Agent,
+                agent_id,
+            )
+
+            assert stored_agent is not None
+            assert stored_agent.mcf_status is not None
+
+            stored = stored_agent.mcf_status
+
+            assert stored.sent_transactions == 12
+            assert stored.available_transactions == 88
+
+            assert (
+                stored.last_connection_datetime
+                == "20261116093000"
+            )
+
+            assert (
+                stored.connection_age_seconds
+                == 3600
+            )
+
+            assert stored.connection_stale is False
+            assert stored.last_error is None
 
     finally:
         database.dispose()

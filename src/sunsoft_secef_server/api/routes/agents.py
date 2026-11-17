@@ -19,6 +19,10 @@ from sunsoft_secef_server.schemas import (
     CentralJobReportRequest,
     CentralJobReportResponse,
 )
+from sunsoft_secef_server.storage.auth_repositories import (
+    OdooCredentialRepository,
+)
+
 from sunsoft_secef_server.storage.models import (
     Agent,
     AgentCredential,
@@ -26,11 +30,15 @@ from sunsoft_secef_server.storage.models import (
     utc_now,
 )
 from sunsoft_secef_server.storage.repositories import (
+    AgentMCFStatusRepository,
     CentralJobConflictError,
     CentralJobNotFoundError,
     CentralJobRepository,
     InvalidJobTransitionError,
 )
+
+
+ODOO_HEARTBEAT_STALE_SECONDS = 180
 
 
 router = APIRouter(
@@ -165,12 +173,174 @@ def heartbeat(
     agent.environment = payload.environment
     agent.last_seen_at = utc_now()
 
+    if payload.mcf_status is not None:
+        mcf_status = payload.mcf_status
+
+        AgentMCFStatusRepository(
+            session
+        ).upsert(
+            agent_id=agent.id,
+            sent_transactions=(
+                mcf_status.sent_transactions
+            ),
+            available_transactions=(
+                mcf_status.available_transactions
+            ),
+            last_connection_datetime=(
+                mcf_status.last_connection_datetime
+            ),
+            connection_age_seconds=(
+                mcf_status.connection_age_seconds
+            ),
+            connection_stale=(
+                mcf_status.connection_stale
+            ),
+            last_error=(
+                mcf_status.last_error
+            ),
+        )
+
     session.flush()
 
     return AgentHeartbeatResponse(
         status="accepted",
         agent_uid=normalized_agent_uid,
     )
+
+
+@router.get(
+    "/{agent_uid}/odoo-status",
+)
+def get_agent_odoo_status(
+    agent_uid: str,
+    credential: AgentAuthDependency,
+    session: SessionDependency,
+) -> dict[str, object]:
+    """
+    Retourne l'etat Odoo du Tenant de l'Agent.
+
+    Aucun appel direct vers Odoo n'est effectue.
+    Le statut repose uniquement sur la presence
+    centralisee du credential Odoo.
+    """
+
+    normalized_agent_uid = _normalize_identifier(
+        agent_uid,
+        "agent_uid",
+    )
+
+    agent = _require_authorized_agent(
+        agent_uid=normalized_agent_uid,
+        credential=credential,
+        session=session,
+    )
+
+    if agent.tenant_id is None:
+        return {
+            "status": "not_linked",
+            "credential_configured": False,
+            "last_seen_at": None,
+            "last_seen_age_seconds": None,
+            "stale_after_seconds": (
+                ODOO_HEARTBEAT_STALE_SECONDS
+            ),
+        }
+
+    credentials = (
+        OdooCredentialRepository(
+            session
+        ).list_active_for_tenant(
+            agent.tenant_id
+        )
+    )
+
+    if not credentials:
+        return {
+            "status": "not_linked",
+            "credential_configured": False,
+            "last_seen_at": None,
+            "last_seen_age_seconds": None,
+            "stale_after_seconds": (
+                ODOO_HEARTBEAT_STALE_SECONDS
+            ),
+        }
+
+    last_seen_values = [
+        item.last_used_at
+        for item in credentials
+        if item.last_used_at is not None
+    ]
+
+    if not last_seen_values:
+        return {
+            "status": "unavailable",
+            "credential_configured": True,
+            "last_seen_at": None,
+            "last_seen_age_seconds": None,
+            "stale_after_seconds": (
+                ODOO_HEARTBEAT_STALE_SECONDS
+            ),
+        }
+
+    last_seen = max(
+        last_seen_values
+    )
+
+    now = utc_now()
+
+    comparable_last_seen = last_seen
+    comparable_now = now
+
+    if (
+        comparable_last_seen.tzinfo is None
+        and comparable_now.tzinfo is not None
+    ):
+        comparable_last_seen = (
+            comparable_last_seen.replace(
+                tzinfo=comparable_now.tzinfo
+            )
+        )
+
+    elif (
+        comparable_last_seen.tzinfo is not None
+        and comparable_now.tzinfo is None
+    ):
+        comparable_now = (
+            comparable_now.replace(
+                tzinfo=comparable_last_seen.tzinfo
+            )
+        )
+
+    age_seconds = int(
+        max(
+            0,
+            (
+                comparable_now
+                - comparable_last_seen
+            ).total_seconds(),
+        )
+    )
+
+    odoo_status = (
+        "linked"
+        if age_seconds
+        <= ODOO_HEARTBEAT_STALE_SECONDS
+        else "unavailable"
+    )
+
+    return {
+        "status": odoo_status,
+        "credential_configured": True,
+        "last_seen_at": (
+            comparable_last_seen.isoformat()
+        ),
+        "last_seen_age_seconds": (
+            age_seconds
+        ),
+        "stale_after_seconds": (
+            ODOO_HEARTBEAT_STALE_SECONDS
+        ),
+    }
 
 
 @router.get(

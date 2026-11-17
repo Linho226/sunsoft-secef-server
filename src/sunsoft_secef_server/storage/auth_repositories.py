@@ -1208,6 +1208,34 @@ class OdooCredentialRepository:
 
         return credential, token
 
+    def list_active_for_tenant(
+        self,
+        tenant_id: int,
+    ) -> list[OdooCredential]:
+        """
+        Retourne les credentials Odoo actifs
+        d'un Tenant.
+        """
+
+        statement = select(
+            OdooCredential
+        ).where(
+            OdooCredential.tenant_id
+            == tenant_id,
+            OdooCredential.is_active.is_(
+                True
+            ),
+            OdooCredential.revoked_at.is_(
+                None
+            ),
+        )
+
+        return list(
+            self.session.scalars(
+                statement
+            ).all()
+        )
+
     def authenticate(
         self,
         token: str,

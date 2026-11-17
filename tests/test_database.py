@@ -27,6 +27,7 @@ def test_database_initialization(
         )
 
         assert "agents" in tables
+        assert "agent_mcf_status" in tables
         assert "certification_requests" in tables
         assert "central_jobs" in tables
 

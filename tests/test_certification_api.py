@@ -258,6 +258,115 @@ def test_create_certification_creates_job(
             )
 
 
+def test_create_certification_preserves_ft_payload(
+    tmp_path,
+) -> None:
+    """V?rifie que le serveur conserve invoice_type FT."""
+
+    app = _create_test_app(
+        tmp_path
+    )
+
+    request_uid = _new_uid()
+
+    invoice_number = (
+        "FT/2026/00001"
+    )
+
+    with TestClient(app) as client:
+        provisioned = (
+            _provision_tenant_with_agent(
+                app
+            )
+        )
+
+        payload = _certification_payload(
+            request_uid=request_uid,
+            agent_uid=(
+                provisioned["agent_uid"]
+            ),
+            invoice_number=invoice_number,
+        )
+
+        payload["payload"]["invoice"][
+            "invoice_type"
+        ] = "FT"
+
+        payload["payload"]["items"][0][
+            "is_downpayment"
+        ] = True
+
+        response = client.post(
+            "/api/v1/certifications",
+            headers=_auth_headers(
+                provisioned["odoo_token"]
+            ),
+            json=payload,
+        )
+
+        assert response.status_code == 200
+
+        with (
+            app.state.database.session()
+            as session
+        ):
+            certification = (
+                CertificationRepository(
+                    session
+                ).get_by_request_uid(
+                    request_uid
+                )
+            )
+
+            assert certification is not None
+
+            assert (
+                certification.payload[
+                    "invoice"
+                ][
+                    "invoice_type"
+                ]
+                == "FT"
+            )
+
+            assert (
+                certification.payload[
+                    "items"
+                ][0][
+                    "is_downpayment"
+                ]
+                is True
+            )
+
+            job = (
+                CentralJobRepository(
+                    session
+                ).get_for_certification(
+                    certification.id
+                )
+            )
+
+            assert job is not None
+
+            assert (
+                job.payload[
+                    "invoice"
+                ][
+                    "invoice_type"
+                ]
+                == "FT"
+            )
+
+            assert (
+                job.payload[
+                    "items"
+                ][0][
+                    "is_downpayment"
+                ]
+                is True
+            )
+
+
 def test_create_certification_is_idempotent(
     tmp_path,
 ) -> None:

@@ -640,3 +640,560 @@ def test_agent_cannot_report_another_agents_job(
         )
 
         assert response.status_code == 404
+
+
+def test_heartbeat_persists_and_updates_mcf_status(
+    tmp_path,
+) -> None:
+    """
+    Le heartbeat cr?e puis met ? jour une seule
+    ligne agent_mcf_status pour l'Agent.
+    """
+
+    from sqlalchemy import (
+        func,
+        select,
+    )
+
+    from sunsoft_secef_server.storage.models import (
+        AgentMCFStatus,
+    )
+
+    app = _create_test_app(
+        tmp_path
+    )
+
+    agent_uid = _new_uid()
+
+    with TestClient(app) as client:
+        provisioned = _provision_agent(
+            app,
+            agent_uid=agent_uid,
+        )
+
+        headers = _auth_headers(
+            provisioned["agent_token"]
+        )
+
+        first = client.put(
+            (
+                f"/api/v1/agents/"
+                f"{agent_uid}/heartbeat"
+            ),
+            headers=headers,
+            json={
+                "agent_uid": agent_uid,
+                "version": "0.1.0",
+                "environment": "test",
+                "mcf_status": {
+                    "sent_transactions": 12,
+                    "available_transactions": 88,
+                    "last_connection_datetime": (
+                        "20261116093000"
+                    ),
+                    "connection_age_seconds": 3600,
+                    "connection_stale": False,
+                    "last_error": None,
+                },
+            },
+        )
+
+        assert first.status_code == 200
+
+        with (
+            app.state.database.session()
+            as session
+        ):
+            agent = AgentRepository(
+                session
+            ).get_by_uid(
+                agent_uid
+            )
+
+            assert agent is not None
+
+            first_status = session.scalar(
+                select(
+                    AgentMCFStatus
+                ).where(
+                    AgentMCFStatus.agent_id
+                    == agent.id
+                )
+            )
+
+            assert first_status is not None
+
+            first_status_id = (
+                first_status.id
+            )
+
+            assert (
+                first_status.sent_transactions
+                == 12
+            )
+
+            assert (
+                first_status.available_transactions
+                == 88
+            )
+
+            assert (
+                first_status.last_connection_datetime
+                == "20261116093000"
+            )
+
+            assert (
+                first_status.connection_age_seconds
+                == 3600
+            )
+
+            assert (
+                first_status.connection_stale
+                is False
+            )
+
+        second = client.put(
+            (
+                f"/api/v1/agents/"
+                f"{agent_uid}/heartbeat"
+            ),
+            headers=headers,
+            json={
+                "agent_uid": agent_uid,
+                "version": "0.2.0",
+                "environment": "test",
+                "mcf_status": {
+                    "sent_transactions": 15,
+                    "available_transactions": 85,
+                    "last_connection_datetime": (
+                        "20261116103000"
+                    ),
+                    "connection_age_seconds": 120,
+                    "connection_stale": False,
+                    "last_error": "E42",
+                },
+            },
+        )
+
+        assert second.status_code == 200
+
+        with (
+            app.state.database.session()
+            as session
+        ):
+            agent = AgentRepository(
+                session
+            ).get_by_uid(
+                agent_uid
+            )
+
+            assert agent is not None
+
+            status = session.scalar(
+                select(
+                    AgentMCFStatus
+                ).where(
+                    AgentMCFStatus.agent_id
+                    == agent.id
+                )
+            )
+
+            assert status is not None
+
+            assert status.id == first_status_id
+
+            assert (
+                status.sent_transactions
+                == 15
+            )
+
+            assert (
+                status.available_transactions
+                == 85
+            )
+
+            assert (
+                status.last_connection_datetime
+                == "20261116103000"
+            )
+
+            assert (
+                status.connection_age_seconds
+                == 120
+            )
+
+            assert (
+                status.connection_stale
+                is False
+            )
+
+            assert status.last_error == "E42"
+
+            count = session.scalar(
+                select(
+                    func.count(
+                        AgentMCFStatus.id
+                    )
+                ).where(
+                    AgentMCFStatus.agent_id
+                    == agent.id
+                )
+            )
+
+            assert count == 1
+
+
+def test_heartbeat_without_mcf_status_preserves_existing_status(
+    tmp_path,
+) -> None:
+    """
+    Un heartbeat historique sans mcf_status
+    ne supprime ni n'alt?re le dernier statut C2h.
+    """
+
+    from sqlalchemy import select
+
+    from sunsoft_secef_server.storage.models import (
+        AgentMCFStatus,
+    )
+
+    app = _create_test_app(
+        tmp_path
+    )
+
+    agent_uid = _new_uid()
+
+    with TestClient(app) as client:
+        provisioned = _provision_agent(
+            app,
+            agent_uid=agent_uid,
+        )
+
+        headers = _auth_headers(
+            provisioned["agent_token"]
+        )
+
+        with_status = client.put(
+            (
+                f"/api/v1/agents/"
+                f"{agent_uid}/heartbeat"
+            ),
+            headers=headers,
+            json={
+                "agent_uid": agent_uid,
+                "version": "0.1.0",
+                "environment": "test",
+                "mcf_status": {
+                    "sent_transactions": 7,
+                    "available_transactions": 93,
+                    "last_connection_datetime": (
+                        "20261116080000"
+                    ),
+                    "connection_age_seconds": 7200,
+                    "connection_stale": False,
+                    "last_error": None,
+                },
+            },
+        )
+
+        assert with_status.status_code == 200
+
+        legacy = client.put(
+            (
+                f"/api/v1/agents/"
+                f"{agent_uid}/heartbeat"
+            ),
+            headers=headers,
+            json={
+                "agent_uid": agent_uid,
+                "version": "0.2.0",
+                "environment": "production",
+            },
+        )
+
+        assert legacy.status_code == 200
+
+        with (
+            app.state.database.session()
+            as session
+        ):
+            agent = AgentRepository(
+                session
+            ).get_by_uid(
+                agent_uid
+            )
+
+            assert agent is not None
+
+            status = session.scalar(
+                select(
+                    AgentMCFStatus
+                ).where(
+                    AgentMCFStatus.agent_id
+                    == agent.id
+                )
+            )
+
+            assert status is not None
+
+            assert (
+                status.sent_transactions
+                == 7
+            )
+
+            assert (
+                status.available_transactions
+                == 93
+            )
+
+            assert (
+                status.last_connection_datetime
+                == "20261116080000"
+            )
+
+            assert (
+                status.connection_age_seconds
+                == 7200
+            )
+
+            assert (
+                status.connection_stale
+                is False
+            )
+
+            assert status.last_error is None
+
+            # Le heartbeat Agent reste bien actualis?.
+            assert agent.version == "0.2.0"
+
+            assert (
+                agent.environment
+                == "production"
+            )
+
+
+
+def test_agent_odoo_status_lifecycle(
+    tmp_path,
+) -> None:
+    """
+    Le statut Odoo suit la presence du credential
+    du Tenant de l'Agent.
+    """
+
+    from datetime import timedelta
+
+    from sunsoft_secef_server.storage.auth_repositories import (
+        OdooCredentialRepository,
+    )
+    from sunsoft_secef_server.storage.models import (
+        utc_now,
+    )
+
+    app = _create_test_app(
+        tmp_path
+    )
+
+    agent_uid = _new_uid()
+
+    with TestClient(app) as client:
+        provisioned = _provision_agent(
+            app,
+            agent_uid=agent_uid,
+        )
+
+        agent_headers = _auth_headers(
+            provisioned["agent_token"]
+        )
+
+        endpoint = (
+            f"/api/v1/agents/"
+            f"{agent_uid}/odoo-status"
+        )
+
+        # Credential cree, mais aucun heartbeat Odoo.
+        initial = client.get(
+            endpoint,
+            headers=agent_headers,
+        )
+
+        assert initial.status_code == 200
+
+        initial_body = initial.json()
+
+        assert (
+            initial_body["status"]
+            == "unavailable"
+        )
+        assert (
+            initial_body[
+                "credential_configured"
+            ]
+            is True
+        )
+        assert (
+            initial_body["last_seen_at"]
+            is None
+        )
+        assert (
+            initial_body[
+                "stale_after_seconds"
+            ]
+            == 180
+        )
+
+        # Simule une presence Odoo recente.
+        with (
+            app.state.database.session()
+            as session
+        ):
+            repository = (
+                OdooCredentialRepository(
+                    session
+                )
+            )
+
+            odoo_credential = (
+                repository.get_by_uid(
+                    provisioned[
+                        "odoo_credential_uid"
+                    ]
+                )
+            )
+
+            assert odoo_credential is not None
+
+            odoo_credential.last_used_at = (
+                utc_now()
+            )
+
+            session.commit()
+
+        linked = client.get(
+            endpoint,
+            headers=agent_headers,
+        )
+
+        assert linked.status_code == 200
+
+        linked_body = linked.json()
+
+        assert (
+            linked_body["status"]
+            == "linked"
+        )
+        assert (
+            linked_body["last_seen_at"]
+            is not None
+        )
+        assert (
+            linked_body[
+                "last_seen_age_seconds"
+            ]
+            is not None
+        )
+        assert (
+            linked_body[
+                "last_seen_age_seconds"
+            ]
+            <= 180
+        )
+
+        # Simule plus de trois minutes
+        # sans activite Odoo.
+        with (
+            app.state.database.session()
+            as session
+        ):
+            repository = (
+                OdooCredentialRepository(
+                    session
+                )
+            )
+
+            odoo_credential = (
+                repository.get_by_uid(
+                    provisioned[
+                        "odoo_credential_uid"
+                    ]
+                )
+            )
+
+            assert odoo_credential is not None
+
+            odoo_credential.last_used_at = (
+                utc_now()
+                - timedelta(
+                    minutes=4
+                )
+            )
+
+            session.commit()
+
+        stale = client.get(
+            endpoint,
+            headers=agent_headers,
+        )
+
+        assert stale.status_code == 200
+
+        stale_body = stale.json()
+
+        assert (
+            stale_body["status"]
+            == "unavailable"
+        )
+        assert (
+            stale_body[
+                "credential_configured"
+            ]
+            is True
+        )
+        assert (
+            stale_body[
+                "last_seen_age_seconds"
+            ]
+            > 180
+        )
+
+        # Credential revoque :
+        # plus aucune liaison Odoo active.
+        with (
+            app.state.database.session()
+            as session
+        ):
+            OdooCredentialRepository(
+                session
+            ).revoke(
+                provisioned[
+                    "odoo_credential_uid"
+                ]
+            )
+
+            session.commit()
+
+        unlinked = client.get(
+            endpoint,
+            headers=agent_headers,
+        )
+
+        assert unlinked.status_code == 200
+
+        unlinked_body = (
+            unlinked.json()
+        )
+
+        assert (
+            unlinked_body["status"]
+            == "not_linked"
+        )
+        assert (
+            unlinked_body[
+                "credential_configured"
+            ]
+            is False
+        )
+        assert (
+            unlinked_body["last_seen_at"]
+            is None
+        )

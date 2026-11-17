@@ -196,6 +196,57 @@
         <article class="agent-detail-card">
 
             <div class="agent-detail-card-title">
+                MCF fiscal / connexion serveur
+            </div>
+
+            <dl>
+
+                <div>
+                    <dt>État fiscal MCF</dt>
+                    <dd>
+                        <span class="agents-update {{ mcf_status_class }}">
+                            {{ mcf_status_label }}
+                        </span>
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Dernière connexion serveur</dt>
+                    <dd>{{ mcf_last_connection }}</dd>
+                </div>
+
+                <div>
+                    <dt>Ancienneté C2 actuelle</dt>
+                    <dd>{{ mcf_age }}</dd>
+                </div>
+
+                <div>
+                    <dt>Transactions envoyées</dt>
+                    <dd>{{ mcf_sent_transactions }}</dd>
+                </div>
+
+                <div>
+                    <dt>Transactions disponibles</dt>
+                    <dd>{{ mcf_available_transactions }}</dd>
+                </div>
+
+                <div>
+                    <dt>Dernière erreur MCF</dt>
+                    <dd>{{ mcf_last_error }}</dd>
+                </div>
+
+                <div>
+                    <dt>Dernier statut C2 reçu</dt>
+                    <dd>{{ mcf_status_received }}</dd>
+                </div>
+
+            </dl>
+
+        </article>
+
+        <article class="agent-detail-card">
+
+            <div class="agent-detail-card-title">
                 Mise à jour
             </div>
 

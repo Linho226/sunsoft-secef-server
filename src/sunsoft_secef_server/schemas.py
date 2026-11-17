@@ -39,6 +39,36 @@ def _normalize_required_text(
     return normalized_value
 
 
+class AgentMCFStatus(BaseModel):
+    """Etat C2h recu depuis un Agent."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    sent_transactions: int = Field(
+        ge=0,
+    )
+
+    available_transactions: int = Field(
+        ge=0,
+    )
+
+    last_connection_datetime: str = Field(
+        min_length=14,
+        max_length=14,
+        pattern=r"^[0-9]{14}$",
+    )
+
+    connection_age_seconds: int = Field(
+        ge=0,
+    )
+
+    connection_stale: bool
+
+    last_error: str | None = None
+
+
 class AgentHeartbeatRequest(BaseModel):
     """Heartbeat reçu depuis un Agent SECeF."""
 
@@ -57,6 +87,8 @@ class AgentHeartbeatRequest(BaseModel):
     )
 
     environment: Environment
+
+    mcf_status: AgentMCFStatus | None = None
 
     @field_validator(
         "agent_uid",

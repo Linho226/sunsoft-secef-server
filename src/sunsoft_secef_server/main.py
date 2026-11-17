@@ -30,6 +30,9 @@ from sunsoft_secef_server.api.routes.odoo import (
 from sunsoft_secef_server.api.routes.downloads import (
     router as downloads_router,
 )
+from sunsoft_secef_server.api.routes.releases import (
+    router as releases_router,
+)
 from sunsoft_secef_server.config import (
     Settings,
     get_settings,
@@ -144,6 +147,11 @@ def create_app(
 
     app.include_router(
         odoo_router,
+        prefix="/api/v1",
+    )
+
+    app.include_router(
+        releases_router,
         prefix="/api/v1",
     )
 

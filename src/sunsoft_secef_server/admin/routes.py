@@ -47,6 +47,7 @@ from sunsoft_secef_server.storage.release_repositories import (
 )
 from sunsoft_secef_server.storage.models import (
     Agent,
+    AgentMCFStatus,
     AgentActivationCode,
     OdooCredential,
     Site,
@@ -1096,6 +1097,214 @@ def _agent_update_state(
     )
 
 
+
+MCF_ADMIN_STALE_AFTER_SECONDS = (
+    7 * 24 * 60 * 60
+)
+
+
+def _mcf_effective_age_seconds(
+    status,
+) -> int | None:
+    """
+    Calcule l'anciennete C2 actuelle.
+
+    connection_age_seconds correspond a
+    l'anciennete mesuree par l'Agent au
+    moment du dernier C2 reussi.
+
+    Le serveur ajoute ensuite le temps
+    ecoule depuis status_updated_at afin
+    qu'un ancien statut ne reste pas
+    artificiellement "recent".
+    """
+
+    if status is None:
+        return None
+
+    base_age = max(
+        0,
+        int(
+            status.connection_age_seconds
+        ),
+    )
+
+    updated_at = (
+        status.status_updated_at
+    )
+
+    if updated_at is None:
+        return base_age
+
+    now = utc_now()
+
+    if (
+        updated_at.tzinfo is None
+        and now.tzinfo is not None
+    ):
+        updated_at = (
+            updated_at.replace(
+                tzinfo=now.tzinfo
+            )
+        )
+
+    elif (
+        updated_at.tzinfo is not None
+        and now.tzinfo is None
+    ):
+        now = now.replace(
+            tzinfo=updated_at.tzinfo
+        )
+
+    elapsed = int(
+        (
+            now
+            - updated_at
+        ).total_seconds()
+    )
+
+    return (
+        base_age
+        + max(
+            0,
+            elapsed,
+        )
+    )
+
+
+def _mcf_admin_state(
+    status,
+) -> tuple[
+    str,
+    str,
+    int | None,
+]:
+    """
+    Retourne :
+    - libelle
+    - classe visuelle
+    - anciennete C2 actuelle
+
+    Cet etat est independant de la
+    presence en ligne de l'Agent.
+    """
+
+    age_seconds = (
+        _mcf_effective_age_seconds(
+            status
+        )
+    )
+
+    if (
+        status is None
+        or age_seconds is None
+    ):
+        return (
+            "Indisponible",
+            "unknown",
+            None,
+        )
+
+    stale = (
+        bool(
+            status.connection_stale
+        )
+        or (
+            age_seconds
+            > MCF_ADMIN_STALE_AFTER_SECONDS
+        )
+    )
+
+    if stale:
+        return (
+            "Alerte > 7 jours",
+            "warning",
+            age_seconds,
+        )
+
+    return (
+        "OK",
+        "ok",
+        age_seconds,
+    )
+
+
+def _fmt_mcf_device_datetime(
+    value: str | None,
+) -> str:
+    """
+    Formate la valeur brute MCF
+    AAAAMMJJHHmmss sans hypothese
+    de fuseau horaire.
+    """
+
+    if (
+        value is None
+        or len(value) != 14
+        or not value.isdigit()
+    ):
+        return "?"
+
+    return (
+        value[6:8]
+        + "/"
+        + value[4:6]
+        + "/"
+        + value[0:4]
+        + " "
+        + value[8:10]
+        + ":"
+        + value[10:12]
+        + ":"
+        + value[12:14]
+    )
+
+
+def _fmt_mcf_age(
+    seconds: int | None,
+) -> str:
+    if seconds is None or seconds < 0:
+        return "?"
+
+    days, remainder = divmod(
+        seconds,
+        86400,
+    )
+
+    hours, remainder = divmod(
+        remainder,
+        3600,
+    )
+
+    minutes, remaining_seconds = divmod(
+        remainder,
+        60,
+    )
+
+    if days:
+        return (
+            f"{days} j "
+            f"{hours} h "
+            f"{minutes} min"
+        )
+
+    if hours:
+        return (
+            f"{hours} h "
+            f"{minutes} min"
+        )
+
+    if minutes:
+        return (
+            f"{minutes} min "
+            f"{remaining_seconds} s"
+        )
+
+    return (
+        f"{remaining_seconds} s"
+    )
+
+
 @router.get(
     "/agents",
     response_class=HTMLResponse,
@@ -1118,6 +1327,7 @@ def agents(
             Tenant.name,
             Site.name,
             Site.code,
+            AgentMCFStatus,
         )
         .outerjoin(
             Tenant,
@@ -1126,6 +1336,11 @@ def agents(
         .outerjoin(
             Site,
             Site.id == Agent.site_id,
+        )
+        .outerjoin(
+            AgentMCFStatus,
+            AgentMCFStatus.agent_id
+            == Agent.id,
         )
         .order_by(
             Agent.id.desc()
@@ -1157,6 +1372,7 @@ def agents(
         tenant_name,
         site_name,
         site_code,
+        mcf_status,
     ) in result:
 
         online = _agent_is_online(
@@ -1173,6 +1389,25 @@ def agents(
         ) = _agent_update_state(
             agent.version,
             current_version,
+        )
+
+        (
+            mcf_status_label,
+            mcf_status_class,
+            mcf_age_seconds,
+        ) = _mcf_admin_state(
+            mcf_status
+        )
+
+        mcf_last_connection = (
+            _fmt_mcf_device_datetime(
+                (
+                    mcf_status
+                    .last_connection_datetime
+                )
+                if mcf_status is not None
+                else None
+            )
         )
 
         if site_name:
@@ -1209,6 +1444,16 @@ def agents(
                 "last_seen":
                     _fmt_datetime(
                         agent.last_seen_at
+                    ),
+                "mcf_status_label":
+                    mcf_status_label,
+                "mcf_status_class":
+                    mcf_status_class,
+                "mcf_last_connection":
+                    mcf_last_connection,
+                "mcf_age":
+                    _fmt_mcf_age(
+                        mcf_age_seconds
                     ),
                 "created_at":
                     _fmt_datetime(
@@ -1286,6 +1531,7 @@ def agent_detail(
             Tenant.name,
             Site.name,
             Site.code,
+            AgentMCFStatus,
         )
         .outerjoin(
             Tenant,
@@ -1294,6 +1540,11 @@ def agent_detail(
         .outerjoin(
             Site,
             Site.id == Agent.site_id,
+        )
+        .outerjoin(
+            AgentMCFStatus,
+            AgentMCFStatus.agent_id
+            == Agent.id,
         )
         .where(
             Agent.agent_uid
@@ -1314,6 +1565,7 @@ def agent_detail(
         tenant_name,
         site_name,
         site_code,
+        mcf_status,
     ) = result
 
     current_release = (
@@ -1339,6 +1591,52 @@ def agent_detail(
         agent.version,
         current_version,
     )
+
+    (
+        mcf_status_label,
+        mcf_status_class,
+        mcf_age_seconds,
+    ) = _mcf_admin_state(
+        mcf_status
+    )
+
+    mcf_last_connection = (
+        _fmt_mcf_device_datetime(
+            (
+                mcf_status
+                .last_connection_datetime
+            )
+            if mcf_status is not None
+            else None
+        )
+    )
+
+    if mcf_status is not None:
+        mcf_sent_transactions = (
+            mcf_status.sent_transactions
+        )
+
+        mcf_available_transactions = (
+            mcf_status
+            .available_transactions
+        )
+
+        mcf_last_error = (
+            mcf_status.last_error
+            or "Aucune"
+        )
+
+        mcf_status_received = (
+            _fmt_datetime(
+                mcf_status.status_updated_at
+            )
+        )
+
+    else:
+        mcf_sent_transactions = "?"
+        mcf_available_transactions = "?"
+        mcf_last_error = "?"
+        mcf_status_received = "?"
 
     if site_name:
         site_display = (
@@ -1374,6 +1672,24 @@ def agent_detail(
                 _fmt_datetime(
                     agent.last_seen_at
                 ),
+            "mcf_status_label":
+                mcf_status_label,
+            "mcf_status_class":
+                mcf_status_class,
+            "mcf_last_connection":
+                mcf_last_connection,
+            "mcf_age":
+                _fmt_mcf_age(
+                    mcf_age_seconds
+                ),
+            "mcf_sent_transactions":
+                mcf_sent_transactions,
+            "mcf_available_transactions":
+                mcf_available_transactions,
+            "mcf_last_error":
+                mcf_last_error,
+            "mcf_status_received":
+                mcf_status_received,
             "created_at":
                 _fmt_datetime(
                     agent.created_at

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from sunsoft_secef_server.storage.models import (
     Agent,
+    AgentMCFStatus,
     CentralJob,
     CertificationRequest,
     JobStatus,
@@ -168,6 +169,105 @@ def _sync_certification_from_job(
     )
 
     return certification
+
+
+class AgentMCFStatusRepository:
+    """Persistance du dernier statut C2h d'un Agent."""
+
+    def __init__(
+        self,
+        session: Session,
+    ) -> None:
+        self.session = session
+
+    def get_by_agent_id(
+        self,
+        agent_id: int,
+    ) -> AgentMCFStatus | None:
+        """Retourne le dernier statut MCF d'un Agent."""
+
+        statement = select(
+            AgentMCFStatus
+        ).where(
+            AgentMCFStatus.agent_id
+            == agent_id
+        )
+
+        return self.session.scalar(
+            statement
+        )
+
+    def upsert(
+        self,
+        *,
+        agent_id: int,
+        sent_transactions: int,
+        available_transactions: int,
+        last_connection_datetime: str,
+        connection_age_seconds: int,
+        connection_stale: bool,
+        last_error: str | None,
+    ) -> AgentMCFStatus:
+        """
+        Cr?e ou remplace le dernier ?tat C2h.
+
+        Une seule ligne est conserv?e par Agent.
+        """
+
+        status = self.get_by_agent_id(
+            agent_id
+        )
+
+        now = utc_now()
+
+        if status is None:
+            status = AgentMCFStatus(
+                agent_id=agent_id,
+                sent_transactions=(
+                    sent_transactions
+                ),
+                available_transactions=(
+                    available_transactions
+                ),
+                last_connection_datetime=(
+                    last_connection_datetime
+                ),
+                connection_age_seconds=(
+                    connection_age_seconds
+                ),
+                connection_stale=(
+                    connection_stale
+                ),
+                last_error=last_error,
+                status_updated_at=now,
+            )
+
+            self.session.add(
+                status
+            )
+
+        else:
+            status.sent_transactions = (
+                sent_transactions
+            )
+            status.available_transactions = (
+                available_transactions
+            )
+            status.last_connection_datetime = (
+                last_connection_datetime
+            )
+            status.connection_age_seconds = (
+                connection_age_seconds
+            )
+            status.connection_stale = (
+                connection_stale
+            )
+            status.last_error = last_error
+            status.status_updated_at = now
+
+        self.session.flush()
+
+        return status
 
 
 class AgentRepository:
