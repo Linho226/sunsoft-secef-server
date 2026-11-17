@@ -339,3 +339,55 @@ def download_current_agent(
                 release.sha256,
         },
     )
+# ============================================================
+# Compatibilite Manager Agent
+# ============================================================
+
+@router.get(
+    "/api/v1/agent/releases/latest",
+    name="agent-release-latest",
+)
+def latest_agent_release(
+    request: Request,
+    session: SessionDependency,
+):
+    """
+    Retourne les metadonnees de la release Agent
+    actuellement publiee.
+
+    Compatibilite avec les Managers Agent existants.
+    """
+
+    release = AgentReleaseRepository(
+        session
+    ).get_current()
+
+    if release is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "Aucune version Agent "
+                "n'est actuellement publiee."
+            ),
+        )
+
+    path = _release_path(
+        request,
+        release.storage_path,
+    )
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier Agent introuvable.",
+        )
+
+    return {
+        "version": release.version,
+        "filename": release.filename,
+        "sha256": release.sha256,
+        "file_size": release.file_size,
+        "download_url": "/download/agent",
+        "release_notes": release.release_notes,
+        "published_at": release.published_at,
+    }
